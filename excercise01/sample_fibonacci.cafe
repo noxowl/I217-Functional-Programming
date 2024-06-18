@@ -1,0 +1,26 @@
+open NAT .
+    op fib : Nat -> Nat .
+    op sfib : Nat -> Nat .
+    var NzX : NzNat .
+    
+    -- fib
+    eq fib(0) = 0 .
+    eq fib(NzX) = sfib(p NzX) .
+
+    -- sfib
+    eq sfib(0) = 1 .
+    eq sfib(NzX) = fib(NzX) + fib(p NzX) .
+
+    --
+    red fib(10) .
+    -- (55):NzNat
+    -- (0.0000 sec for parse, 0.0003 sec for 639 rewrites + 870 matches)
+
+    red fib(20) .
+    -- (6765):NzNat
+    -- (0.0000 sec for parse, 0.0342 sec for 79201 rewrites + 107856 matches)
+
+    red fib(30) .
+    -- (832040):NzNat
+    -- (0.0000 sec for parse, 3.7061 sec for 9741689 rewrites + 13266265 matches)
+close

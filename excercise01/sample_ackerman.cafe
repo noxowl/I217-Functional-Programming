@@ -1,0 +1,38 @@
+open NAT .
+    op ack : Nat Nat -> Nat .
+    var Y : Nat .
+    vars NzX NzY : NzNat .
+    eq ack(0, Y) = Y + 1 .
+    eq ack(NzX, 0) = ack(p NzX, 1) .
+    eq ack(NzX, NzY) = ack(p NzX, ack(NzX, p NzY)) .
+    --
+    red ack(0, 0) .
+    -- reduce in %NAT : (ack(0,0)):Nat
+    -- (1):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+    
+    red ack(1, 1) .
+    -- reduce in %NAT : (ack(1,1)):Nat
+    -- (3):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 9 rewrites + 12 matches)
+
+    red ack(2, 2) .
+    -- reduce in %NAT : (ack(2,2)):Nat
+    -- (7):NzNat
+    -- (0.0000 sec for parse, 0.0001 sec for 65 rewrites + 91 matches)
+
+    red ack(3, 2) .
+    -- reduce in %NAT : (ack(3,2)):Nat
+    -- (29):NzNat
+    -- (0.0000 sec for parse, 0.0009 sec for 1339 rewrites + 1879 matches)
+
+    red ack(3, 3) .
+    -- reduce in %NAT : (ack(3,3)):Nat
+    -- (61):NzNat
+    -- (0.0000 sec for parse, 0.0042 sec for 6051 rewrites + 8482 matches)
+    --
+    -- very slow
+    red ack(5, 5) .
+
+    red ack(10, 10) .
+close
