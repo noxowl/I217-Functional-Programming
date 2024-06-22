@@ -1,0 +1,34 @@
+open NAT .
+    op tak : Nat Nat Nat -> Nat .
+    op if_then {_} else {_} : Bool Nat Nat -> Nat .
+    op sp_ : Nat -> Nat .
+    vars X Y Z N1 N2 V : Nat .
+
+    eq if true then {N1} else {N2} = N1 .
+    eq if false then {N1} else {N2} = N2 .
+    
+    eq sp 0 = 0 .
+    eq sp V = p V .
+
+    eq tak(X, Y, Z) = if Y < X then {tak(tak(sp X, Y, Z), tak(sp Y, Z, X), tak(sp Z, X, Y))} else {Z} .
+    --
+    red tak(1, 2, 3) . 
+    -- (3):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 3 rewrites + 4 matches)
+    red tak(2, 0, 1) . 
+    -- (0):Zero
+    -- (0.0000 sec for parse, 0.0001 sec for 37 rewrites + 52 matches)
+    red tak(7, 4, 8) . 
+    -- (4):NzNat
+    -- (0.0000 sec for parse, 0.0011 sec for 575 rewrites + 1022 matches)
+    red tak(3, 0, 8) . 
+    -- (1):NzNat
+    -- (0.0000 sec for parse, 0.0206 sec for 12635 rewrites + 19244 matches)
+    red tak(12, 6, 0) . 
+    -- (1):NzNat
+    -- (0.0000 sec for parse, 1.2487 sec for 1099551 rewrites + 1677266 matches)
+    red tak(10, 20, 100) . 
+    -- (100):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 3 rewrites + 4 matches)
+    -- red tak(100, 50, 0) . -- It takes too long to compute this.
+close
