@@ -1,0 +1,23 @@
+open NAT .
+    op sum : Nat -> Nat .
+    var NzX : NzNat .
+    eq sum(0) = 0 .
+    eq sum(NzX) = NzX + sum(p NzX) .
+
+    --
+    red sum(8) .
+    -- (36):NzNat
+    -- (0.0000 sec for parse, 0.0001 sec for 25 rewrites + 33 matches)
+    
+    red sum(16) .
+    -- (136):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 49 rewrites + 65 matches)
+
+    red sum(1024) .
+    -- (524800):NzNat
+    -- (0.0000 sec for parse, 0.0028 sec for 3073 rewrites + 4097 matches)
+
+    red sum(10240) .
+    -- reduce in %NAT : (sum(10240)):NatINFO: Control stack guard page unprotected
+    -- Control stack guard page temporarily disabled: proceed with caution
+close

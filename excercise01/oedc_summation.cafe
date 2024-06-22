@@ -1,0 +1,40 @@
+open NAT .
+    op oedc-sum : Nat -> Nat .
+    op cond : Bool Nat Nat -> Nat .
+    op g : Nat Nat -> Nat .
+
+    vars X Y : Nat .
+    var NzX : NzNat .
+    
+    -- cond
+    eq cond(true, X, Y) = X .
+    eq cond(false, X, Y) = Y .
+
+    -- g
+    eq g(X, Y) = cond(X > Y, g(X, 2 * Y) + g(sd(X, Y), 2 * Y), X) .
+
+    -- oedc-fact
+    eq oedc-sum(0) = 0 .
+    eq oedc-sum(NzX) = g(NzX, 1) .
+
+    --
+    red oedc-sum(8) .
+    -- (36):NzNat
+    -- (0.0000 sec for parse, 0.0002 sec for 72 rewrites + 95 matches)
+
+    red oedc-sum(16) .
+    -- (136):NzNat
+    -- (0.0000 sec for parse, 0.0003 sec for 152 rewrites + 199 matches)
+
+    red oedc-sum(1024) .
+    -- (524800):NzNat
+    -- (0.0000 sec for parse, 0.0153 sec for 10232 rewrites + 13303 matches)
+
+    red oedc-sum(10240) .
+    -- (52433920):NzNat
+    -- (0.0000 sec for parse, 0.1167 sec for 102392 rewrites + 133111 matches)
+
+    red oedc-sum(25565) .
+    -- (326797395):NzNat
+    -- (0.0001 sec for parse, 0.2540 sec for 255642 rewrites + 332336 matches)
+close
