@@ -1,0 +1,27 @@
+-- replace the factorial function with the following definition (mix-fix notation)
+open NAT .
+    op _! : Nat -> Nat .
+    var NzX : NzNat .
+    eq 0 ! = 1 .
+    eq NzX ! = NzX * ((p NzX) !) .
+    --
+    red 0 ! .
+    -- (1):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
+    red 1 ! .
+    -- (1):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 3 rewrites + 4 matches)
+
+    red 5 ! .
+    -- (120):NzNat
+    -- (0.0000 sec for parse, 0.0001 sec for 15 rewrites + 24 matches)
+
+    red 10 ! .
+    -- (3628800):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 30 rewrites + 49 matches)
+
+    red 100 ! .
+    -- (9332621544394415268169923885626670...0000):NzNat
+    -- (0.0000 sec for parse, 0.0004 sec for 300 rewrites + 499 matches)
+close
