@@ -1,0 +1,40 @@
+-- replace the factorial function with the following definition (mix-fix notation)
+open NAT .
+    op _! : Nat -> Nat .
+    op if_then {_} else {_} : Bool Nat Nat -> Nat .
+    op g : Nat Nat -> Nat .
+    var NzX : NzNat .
+    vars X Y N1 N2 : Nat .
+
+    eq if true then {N1} else {N2} = N1 .
+    eq if false then {N1} else {N2} = N2 .
+
+    eq g(X, Y) = if X > Y then {g(X, 2 * Y) * g(sd(X, Y), 2 * Y)} else {X} .
+
+    eq 0 ! = 1 .
+    eq NzX ! = g(NzX, 1) .
+
+    -- test --
+    red 0 ! .
+    -- (1):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
+    red 5 ! .
+    -- (120):NzNat
+    -- (0.0000 sec for parse, 0.0001 sec for 42 rewrites + 60 matches)
+
+    red 10 ! .
+    -- (3628800):NzNat
+    -- (0.0000 sec for parse, 0.0002 sec for 92 rewrites + 130 matches)
+    red 100 ! .
+    -- (9332621544394415268169923885626670049071596826438162146859296389...000):NzNat
+    -- (0.0000 sec for parse, 0.0023 sec for 992 rewrites + 1390 matches)
+
+    red 10000 ! .
+    -- (2846259680917054518906413212119868890148051401702799230794179994...000):NzNat
+    -- (0.0000 sec for parse, 0.1179 sec for 99992 rewrites + 139990 matches)
+
+    red 100000 ! .
+    -- (2824229407960347874293421578024535518477494926091224850578918086...000):NzNat
+    -- (0.0000 sec for parse, 1.2820 sec for 999992 rewrites + 1399990 matches)
+close
