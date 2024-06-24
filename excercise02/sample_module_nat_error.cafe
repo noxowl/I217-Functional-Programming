@@ -1,0 +1,30 @@
+mod! NAT-ERR { 
+    pr(NAT)
+    [Nat ErrNat < Nat&Err]
+    op errNat : -> ErrNat {constr} .
+    op p_ : Zero -> ErrNat .
+    op p_ : ErrNat -> ErrNat .
+    op p_ : Nat&Err -> Nat&Err .
+    op _quo_ : Nat&Err Zero -> ErrNat .
+    op _quo_ : Nat&Err ErrNat -> ErrNat .
+    op _quo_ : ErrNat Nat&Err -> ErrNat .
+    op _quo_ : Nat&Err Nat&Err -> Nat&Err .
+    
+    var NE : Nat&Err .
+    eq p 0 = errNat .
+    eq p errNat = errNat .
+    eq NE quo 0 = errNat .
+    eq NE quo errNat = errNat .
+    eq errNat quo NE = errNat .
+}
+
+open NAT-ERR .
+    red p 1 .
+    red p 0 .
+    red p errNat .
+    red 10 quo 3 .
+    red 10 quo 0 .
+    red 10 quo errNat .
+    red errNat quo 3 .
+    red errNat quo errNat .
+close

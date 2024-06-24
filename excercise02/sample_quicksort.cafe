@@ -1,0 +1,26 @@
+mod! QSORT {
+    -- imports
+    pr(NATLIST) .
+    
+    -- signature
+    op qsort : NatList -> NatList . 
+    op partition : Nat NatList NatList NatList -> NatList . 
+    
+    -- CafeOBJ vars
+    vars X Y : Nat .
+    vars L LL RL : NatList .
+
+    -- equations
+    -- sort
+    eq qsort(nil) = nil .
+    eq qsort(X | nil) = X | nil .
+    eq qsort(X | Y | L) = partition(X,Y | L,nil,nil) . 
+    
+    -- partition
+    eq partition(X,nil,LL,RL) = qsort(LL) @ (X | qsort(RL)) .
+    eq partition(X,Y | L,LL,RL) = if Y < X then {partition(X,L,Y | LL,RL)} else {partition(X,L,LL,Y | RL)} .
+}
+
+open QSORT . 
+    red qsort(4 | 7 | 5 | 1 | 0 | 3 | 6 | 2 | nil) .
+close

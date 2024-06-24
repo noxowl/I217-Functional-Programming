@@ -1,0 +1,32 @@
+mod! NATLIST {
+    pr(NAT-ERR) 
+    [Nil NnNatList < NatList]
+    
+    op nil : -> Nil {constr} .
+    op _|_ : Nat NatList -> NnNatList {constr} .
+
+    op hd : Nil -> ErrNat .
+    op hd : NnNatList -> Nat .
+    op hd : NatList -> Nat&Err .
+    op tl : NatList -> NatList .
+    op _@_ : NatList NatList -> NatList .
+
+    op [_.._] : Nat Nat -> NatList .
+    op if_then {_} else {_} : Bool NatList NatList -> NatList .
+
+    vars X Y : Nat .
+    vars L L2 : NatList .
+
+    eq hd(nil) = errNat .
+    eq hd(X | L) = X .
+
+    eq tl(nil) = nil .
+    eq tl(X | L) = L .
+
+    eq nil @ L2 = L2 .
+    eq (X | L) @ L2 = X | (L @ L2) .
+
+    eq [X .. Y] = if X > Y then {nil} else {X | [X + 1 .. Y]} .
+    eq if true then {L} else {L2} = L .
+    eq if false then {L} else {L2} = L2 .
+}
