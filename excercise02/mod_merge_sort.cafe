@@ -1,0 +1,28 @@
+mod! MSORT {
+    pr(NATLIST) .
+
+    op msort : NatList -> NatList .
+    op mergePairs : NatList NatList -> NatList .
+    vars X Y : Nat .
+    vars L LL RL : NatList .
+
+    eq msort(nil) = nil .
+    eq msort(X | nil) = X | nil .
+    eq msort(X | L) = mergePairs(msort(X | nil), msort(L)) .
+
+    eq mergePairs(nil, nil) = msort(nil) .
+    eq mergePairs(LL, nil) = msort(LL) .
+    eq mergePairs(nil, RL) = msort(RL) .
+    eq mergePairs(X | LL, Y | RL) = if X < Y then {X | mergePairs(LL, Y | RL)} else {Y | mergePairs(X | LL, RL)} .
+}
+
+open MSORT .
+    -- nil이 sort의 맨 마지막이 아니면 [Error]: no successful parse 에러가 발생한다.
+    red msort(4 | 7 | 5 | 1 | 0 | 3 | 6 | 2 | nil) .
+
+    red msort(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | nil) .
+
+    red msort(10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | nil) .
+
+    red msort(1 | 3 | 5 | 7 | 9 | 2 | 4 | 6 | 8 | 10 | nil ) .
+close
