@@ -1,0 +1,165 @@
+mod! GCD {
+    -- imports
+    pr(NAT)
+
+    -- signature
+    op gcd : Nat Zero -> Nat .
+    op gcd : Nat NzNat -> NzNat .
+    op gcd : Nat Nat -> Nat .
+
+    -- CafeOBJ vars
+    var X : Nat .
+    var NzY : NzNat .
+
+    -- equations
+    eq gcd(X, 0) = X .
+    eq gcd(X, NzY) = gcd(NzY, X rem NzY) .
+}
+
+mod! LCM {
+    pr(GCD)
+    op lcm : Nat Zero -> Zero .
+    op lcm : Nat NzNat -> Nat .
+    op lcm : Nat Nat -> Nat .
+    var X : Nat .
+    var NzY : NzNat .
+    eq lcm(X, 0) = 0 .
+    eq lcm(X, NzY) = (X quo gcd(X, NzY)) * NzY .
+}
+
+mod! NAT-ERR { 
+    pr(NAT)
+    [Nat ErrNat < Nat&Err]
+    op errNat : -> ErrNat {constr} .
+    op p_ : Zero -> ErrNat .
+    op p_ : ErrNat -> ErrNat .
+    op p_ : Nat&Err -> Nat&Err .
+    op _quo_ : Nat&Err Zero -> ErrNat .
+    op _quo_ : Nat&Err ErrNat -> ErrNat .
+    op _quo_ : ErrNat Nat&Err -> ErrNat .
+    op _quo_ : Nat&Err Nat&Err -> Nat&Err .
+    
+    var NE : Nat&Err .
+    eq p 0 = errNat .
+    eq p errNat = errNat .
+    eq NE quo 0 = errNat .
+    eq NE quo errNat = errNat .
+    eq errNat quo NE = errNat .
+}
+
+mod! NATLIST {
+    pr(NAT-ERR) 
+    [Nil NnNatList < NatList]
+    
+    op nil : -> Nil {constr} .
+    op _|_ : Nat NatList -> NnNatList {constr} .
+
+    op hd : Nil -> ErrNat .
+    op hd : NnNatList -> Nat .
+    op hd : NatList -> Nat&Err .
+    op tl : NatList -> NatList .
+    op _@_ : NatList NatList -> NatList .
+
+    op [_.._] : Nat Nat -> NatList .
+    op if_then {_} else {_} : Bool NatList NatList -> NatList .
+
+    vars X Y : Nat .
+    vars L L2 : NatList .
+
+    eq hd(nil) = errNat .
+    eq hd(X | L) = X .
+
+    eq tl(nil) = nil .
+    eq tl(X | L) = L .
+
+    eq nil @ L2 = L2 .
+    eq (X | L) @ L2 = X | (L @ L2) .
+    
+    eq [X .. Y] = if X > Y then {nil} else {X | [X + 1 .. Y]} .
+    eq if true then {L} else {L2} = L .
+    eq if false then {L} else {L2} = L2 .
+}
+
+mod! QSORT {
+    -- imports
+    pr(NATLIST) .
+    
+    -- signature
+    op qsort : NatList -> NatList . 
+    op partition : Nat NatList NatList NatList -> NatList . 
+    
+    -- CafeOBJ vars
+    vars X Y : Nat .
+    vars L LL RL : NatList .
+
+    -- equations
+    -- sort
+    eq qsort(nil) = nil .
+    eq qsort(X | nil) = X | nil .
+    eq qsort(X | Y | L) = partition(X,Y | L,nil,nil) . 
+    
+    -- partition
+    eq partition(X,nil,LL,RL) = qsort(LL) @ (X | qsort(RL)) .
+    eq partition(X,Y | L,LL,RL) = if Y < X then {partition(X,L,Y | LL,RL)} else {partition(X,L,LL,Y | RL)} .
+}
+
+mod! ERATOSTHENES-SIEVE {
+    -- imports
+    pr(NATLIST)
+    -- signature
+    op primesUpto : Nat -> NatList .
+    op sieve : NatList -> NatList .
+    op check : Nat NatList -> NatList .
+    
+    -- CafeOBJ vars
+    vars X Y : Nat .
+    var NzX : NzNat .
+    var L : NatList .
+
+    -- equations
+    -- primesUpto
+    eq primesUpto(X) = sieve([2 .. X]) .
+    
+    -- sieve
+    eq sieve(nil) = nil .
+    eq sieve(X | L) = X | sieve(check(X,L)) .
+    
+    -- check
+    eq check(0,L) = L .
+    eq check(NzX,nil) = nil .
+    eq check(NzX,Y | L) = if NzX divides Y then {check(NzX,L)} else {Y | check(NzX,L)} .
+}
+
+-- test
+
+open GCD .
+    red gcd(24,36) .
+    red gcd(2015,31031) .
+close
+
+open LCM .
+    red lcm(24, 36) .
+    red lcm(2015, 31031) .
+close
+
+open NAT-ERR .
+    red p 1 .
+    red p 0 .
+    red p errNat .
+    red 10 quo 3 .
+    red 10 quo 0 .
+    red 10 quo errNat .
+    red errNat quo 3 .
+    red errNat quo errNat .
+close
+
+open QSORT . 
+    red qsort(4 | 7 | 5 | 1 | 0 | 3 | 6 | 2 | nil) .
+close
+
+open ERATOSTHENES-SIEVE .
+    red primesUpto(10) .
+    red primesUpto(20) .
+    red primesUpto(50) .
+    red primesUpto(100) .
+close

@@ -1,0 +1,73 @@
+mod! FIB {
+    pr(NAT)
+    op fib : Nat -> Nat .
+    op sfib : Nat -> Nat .
+    var NzX : NzNat .
+    
+    -- fib
+    eq fib(0) = 0 .
+    eq fib(NzX) = sfib(p NzX) .
+
+    -- sfib
+    eq sfib(0) = 1 .
+    eq sfib(NzX) = fib(NzX) + fib(p NzX) .
+}
+
+mod! FACT {
+    pr(NAT)
+    op fact : Nat -> Nat .
+    var NzX : NzNat .
+    eq fact(0) = 1 .
+    eq fact(NzX) = NzX * fact(p NzX) .
+}
+
+mod! OEDC-FACT {
+    pr(NAT)
+    op cond : Bool Nat Nat -> Nat .
+    op g : Nat Nat -> Nat .
+    op oedc-fact : Nat -> Nat .
+    vars X Y : Nat .
+    var NzX : NzNat .
+    
+    -- cond
+    eq cond(true, X, Y) = X .
+    eq cond(false, X, Y) = Y .
+
+    -- g
+    eq g(X, Y) = cond(X > Y, g(X, 2 * Y) * g(sd(X, Y), 2 * Y), X) .
+
+    -- odec-fact
+    eq oedc-fact(0) = 1 .
+    eq oedc-fact(NzX) = g(NzX, 1) .
+}
+
+mod! ACKERMANN {
+    pr(NAT)
+    op ack : Nat Nat -> Nat .
+    var Y : Nat .
+    vars NzX NzY : NzNat .
+    eq ack(0, Y) = Y + 1 .
+    eq ack(NzX, 0) = ack(p NzX, 1) .
+    eq ack(NzX, NzY) = ack(p NzX, ack(NzX, p NzY)) .
+}
+
+open FIB .
+    red fib(5) .
+    red fib(10) .
+close
+
+open FACT .
+    red fact(0) .
+    red fact(1) .
+    red fact(10) .
+close
+
+open OEDC-FACT .
+    red oedc-fact(0) .
+    red oedc-fact(1) .
+    red oedc-fact(10) .
+close
+
+open ACKERMANN .
+    red ack(0, 0) .
+close
