@@ -64,8 +64,8 @@ op _sum_ : Nat Nat -> NzNat
 ### 항(Terms, Terminology)
 위에서 정의한 Sorts, Variables, Operators 들을 통틀어 Terms 라고 한다. 이후에 서술될 Term Rewriting System(TRS)을 통해 Term f(a)를 Term g(a) 로 변환할 수 있다. TRS에서는 Rule l -> r 의 형태로 term을 변환하고, Rewriting은 이 rule을 적용하여 term을 변환하는 과정을 말한다.
 
-### 방정식(Equations)과 공리(Axoims)
-위에서 정의된 연산자에 대한 행동을 정의한다. 이를 통해 서로 다른 Terms를 equate 할 수 있게 된다. CafeOBJ 에서의 Axoims는 Equations의 형태로 표현된다.
+### 방정식(Equations)과 공리(Axioms)
+위에서 정의된 연산자에 대한 행동을 정의한다. 이를 통해 서로 다른 Terms를 equate 할 수 있게 된다. CafeOBJ 에서의 Axioms는 Equations의 형태로 표현된다.
 
 ```
 eq power(0) = 1 .
