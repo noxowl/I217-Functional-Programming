@@ -2,27 +2,27 @@ mod! ERATOSTHENES-SIEVE {
     -- imports
     pr(NATLIST)
     -- signature
-    op primesUpto : Nat -> NatList .
-    op sieve : NatList -> NatList .
-    op check : Nat NatList -> NatList .
+    op primesUpto : Nat -> NatList . -- list of prime numbers up to X
+    op sieve : NatList -> NatList . -- sieve of Eratosthenes
+    op check : Nat NatList -> NatList . -- check if X divides any element in the list
     
     -- CafeOBJ vars
-    vars X Y : Nat .
-    var NzX : NzNat .
-    var L : NatList .
+    vars X Y : Nat . -- natural number
+    var NzX : NzNat . -- non-zero natural number
+    var L : NatList . -- list of natural numbers
 
     -- equations
     -- primesUpto
-    eq primesUpto(X) = sieve([2 .. X]) .
+    eq primesUpto(X) = sieve([2 .. X]) . -- 2부터 X까지의 자연수 리스트를 생성하고 에라토스테네스의 체를 적용한다.
     
     -- sieve
     eq sieve(nil) = nil .
-    eq sieve(X | L) = X | sieve(check(X,L)) .
+    eq sieve(X | L) = X | sieve(check(X,L)) . -- 리스트의 첫 번째 요소를 소수로 간주하고 나머지 리스트에서 첫 번째 요소로 나누어 떨어지는 수를 제거한다.
     
     -- check
     eq check(0,L) = L .
     eq check(NzX,nil) = nil .
-    eq check(NzX,Y | L) = if NzX divides Y then {check(NzX,L)} else {Y | check(NzX,L)} .
+    eq check(NzX,Y | L) = if NzX divides Y then {check(NzX,L)} else {Y | check(NzX,L)} . -- NzX로 Y를 나누어 떨어지는지 확인하고 나누어 떨어지면 Y를 제거한다.
 }
 
 open ERATOSTHENES-SIEVE .
