@@ -7,8 +7,6 @@ CafeOBJ는 대수적 명세(specification)및 검증(verification) 언어이다.
 * 명세(specification): 소프트웨어 시스템의 내부 작동을 수학적 방식으로 설명하는 것.
 * 검증(verificaiton): 명세에 대한 수학적 증거를 제공하는 것.
 
-
-
 ### Sorts
 Lisp의 Atom, List와 같이 CafeOBJ에서는 임의의 Sort들을 허용한다. Sort에는 Sort가 지정될 수 있고, 한 Sort는 다른 Sort의 하위 Sort로 선언될 수 있다. 예를 들어,
 
@@ -123,6 +121,18 @@ CafeOBJ> open LIST .
 %LIST> close
 CafeOBJ>
 ```
+
+위의 코드에서 ```_|_```는 Nat Sort와 List Sort를 입력으로 하여 List를 반환한다. 여기서 List가 nil이 아닌 자연수의 List임을 명시적으로 보장하고 싶을 수도 있다. 그러한 사양을 코드로 다시 표현한다면: 
+
+```
+mod! NN-NATLIST {
+    [Nil NnNatList <  NatList]
+    op nil : -> Nil {constr} .
+    op _|_ : Nat NatList -> NnNatList {constr} .
+}
+```
+
+위의 코드를 통해 ```_|_``` 을 통해 만들어진 리스트가 Non-nil임이 보장되는 NatList를 명시적으로 선언할수 있게 된다.
 
 ## References
 - [1] R. Diaconescu and K. Futatsugi, Cafeobj Report, vol. Volume 6. in AMAST Series in Computing, no. Volume 6, vol. Volume 6. WORLD SCIENTIFIC, 1998. doi: 10.1142/3831.
