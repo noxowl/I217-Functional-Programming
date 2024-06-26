@@ -69,7 +69,7 @@ op _sum_ : Nat Nat -> NzNat
 
 ```
 eq power(0) = 1 .
-eq power(X) = N * N .
+eq power(X) = X * X .
 ```
 
 ### Tutorial: Lists
