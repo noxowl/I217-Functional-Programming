@@ -10,13 +10,13 @@ CafeOBJ는 대수적 명세(specification)및 검증(verification) 언어이다.
 
 
 ### Sorts
-Lisp의 List와 같이 CafeOBJ에서는 임의의 Sort들을 허용한다. Sort는 순서가 지정될 수 있고, 한 Sort는 다른 Sort의 하위 Sort로 선언될 수 있다. 예를 들어,
+Lisp의 Atom, List와 같이 CafeOBJ에서는 임의의 Sort들을 허용한다. Sort에는 Sort가 지정될 수 있고, 한 Sort는 다른 Sort의 하위 Sort로 선언될 수 있다. 예를 들어,
 
 ```
 [ Pair ]
 ```
 
-_Pair_ 라는 다른 Sort와 Sub-sort 관계가 없는 새로운 Sort를 선언할 수 있다. 여기에 순서를 지정하려는 경우, 다음과 같이 Sort의 정의와 순서를 함께 표현할 수 있다.
+_Pair_ 라는 다른 Sort와 Sub-sort 관계가 없는 새로운 Sort를 선언할 수 있다. 여기에 Sort를 지정하려는 경우, 다음과 같이 Sort의 정의와 Sort를 함께 표현할 수 있다.
 
 ```
 [ Nat < Set ]
@@ -25,6 +25,34 @@ _Pair_ 라는 다른 Sort와 Sub-sort 관계가 없는 새로운 Sort를 선언�
 이는 새 Sort _Set_ 을 선언하며, 이를 (Built-in)Sort _Nat_ 의 Super-sort로 선언한다.
 
 _Nil_ 은 빈 Sort 에 대응한다.
+
+#### 보족
+Sort = Data Type 으로 이해할 수 있다. 예를 들어 자연수 NAT 안의 Sorts는 다음과 같은 그래프 구조를 가진다.
+
+```
+  ?Nat
+    |
+   Nat
+  /   \
+Zero   NzNat
+        |
+       Nat
+```
+
+* *Super-Sort*: Sort들을 포괄하기 위해 존재하는 특정 Sort들의 상위 Sort이다. Nat, Zero, NzNat은 모두 ?Nat의 Sub-Sort로 간주할 수 있다. ?Nat와 같은 특수한 Super-sort는 CafeOBJ가 자동으로 생성한다.
+* *Error-Sort*: Super-sort는 Sub-Sort들의 연산에 대해 정의되지 않은 연산이 발생할 경우 Sub-Sort 대신 반환된다. 예를 들어, NzNat에 대한 연산에서 Equation이 정의되지 않았거나 방정식 자체에 문제가 있는 경우 ?Nat Sort가 반환된다.
+
+Sort 간의 계층 구조는 다음과 같이 선언할 수 있다.
+```
+[Nat ErrNat < Nat&Err]
+```
+이 구문은 Nat과 ErrNat 두 Sort가 Nat&Err라는 단일 Super-sort의 하위 Sort임을 나타낸다. 즉, Nat&Err Sort를 반환하는 방정식에서 결과는 Nat 또는 ErrNat 둘 중 하나가 될 수 있다는 표현을 하나의 출력으로 할 수 있게 된다.
+
+이를 통해 Sort의 역할이 다음과 같음을 알 수 있다.
+* 데이터 타입을 정의한다. (Lisp에서의 Atom + List 들을 모두 포괄한다.)
+* 데이터의 유효성을 검증한다. (타입 시스템으로써 동작한다.)
+* 함수와 연산을 정의하는데 사용한다. (op fib : Nat -> Nat . 함수는 Nat sort를 입력으로 하여 Nat sort를 출력으로 한다.)
+* Super-Sub의 그래프 구조를 통해 데이터간의 계층 구조를 표현할 수 있다.
 
 ### Imports
 CafeOBJ에서는 이미 정의한 모듈을 불러오고 재사용 할 수 있다.
