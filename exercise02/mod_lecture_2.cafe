@@ -50,15 +50,20 @@ mod! NAT-ERR {
 mod! NATLIST {
     pr(NAT-ERR) 
     [Nil NnNatList < NatList]
+    -- NnNatList is a Number and a NatList
+    -- Nil is an empty list
+    -- NatList is either Nil or NnNatList
     
     op nil : -> Nil {constr} .
     op _|_ : Nat NatList -> NnNatList {constr} .
+    -- X | L is a list with head X and tail L
+    -- a.g. 1 | 2 | 3 | nil is a list with head 1, tail 2 | 3 | nil
 
-    op hd : Nil -> ErrNat .
-    op hd : NnNatList -> Nat .
-    op hd : NatList -> Nat&Err .
-    op tl : NatList -> NatList .
-    op _@_ : NatList NatList -> NatList .
+    op hd : Nil -> ErrNat . -- hd(nil) is an error
+    op hd : NnNatList -> Nat . -- hd(X | L) is X. 
+    op hd : NatList -> Nat&Err . -- hd(L) is either X or an error. a.g. hd(nil) is an error, hd(X | L) is X
+    op tl : NatList -> NatList . -- tl(L) is the tail of L. tl(nil) is nil.
+    op _@_ : NatList NatList -> NatList . -- L @ L2 is the concatenation of L and L2
 
     op [_.._] : Nat Nat -> NatList .
     op if_then {_} else {_} : Bool NatList NatList -> NatList .

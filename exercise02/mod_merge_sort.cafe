@@ -1,0 +1,62 @@
+mod! MSORT {
+    pr(NATLIST) .
+
+    op msort : NatList -> NatList .
+    op mergePairs : NatList NatList -> NatList .
+    vars X Y : Nat .
+    vars L LL RL : NatList .
+
+    eq msort(nil) = nil .
+    eq msort(X | nil) = X | nil .
+    eq msort(X | L) = mergePairs(msort(X | nil), msort(L)) .
+
+    eq mergePairs(nil, nil) = msort(nil) . -- 둘 다 유효한 인자(empty가 아닌)가 없으므로 nil을 반환한다.
+    eq mergePairs(LL, nil) = msort(LL) . -- 유효한 인자가 LHS에만 있으므로 nil을 버리고 msort(LL)을 반환한다.
+    eq mergePairs(nil, RL) = msort(RL) . -- 유효한 인자가 RHS에만 있으므로 nil을 버리고 msort(RL)을 반환한다.
+    eq mergePairs(X | LL, Y | RL) = if X < Y then {X | mergePairs(LL, Y | RL)} else {Y | mergePairs(X | LL, RL)} .
+    -- 두 리스트의 첫번째 원소를 비교하여 작은 것을 맨 앞 원소로 하고 나머지는 재귀적으로 mergePairs를 호출한다.
+    -- 예를 들어 최초 msort에 4 | 7 | 5 | 1 | nil이 들어왔다면
+    -- NATLIST의 정의에 의해 __ | __ | __ | __ | nil은 X | L로 나누어지고 msort(X | L) = mergePairs(msort(X | nil), msort(L))이 적용된다.
+    -- msort(X | L) = msort(4 | 7 | 5 | 1 | nil) -> X |-> 4, L |-> 7 | 5 | 1 | nil 이므로 
+    -- mergePairs(msort(4 | nil), msort(7 | 5 | 1 | nil))이 되고
+    -- eq msort(X | nil) = X | nil -> msort(4 | nil) = 4 | nil이 된다.
+    -- 한편 L을 입력으로 받은 msort는 msort(7 | 5 | 1 | nil)이 되고
+    -- mergePairs(msort(7 | nil), msort(5 | 1 | nil))이 반복되어
+    -- mergePairs(7 | nil, mergePairs(5 | nil, msort(1 | nil)))이 되고
+    -- mergePairs(7 | nil, mergePairs(5 | nil, 1 | nil))이 되어서 리스트의 요소를 분리하는 재귀가 종료된다.
+    -- 이어서는 리스트의 요소를 합치는 재귀가 시작되어
+    -- mergePairs(X | LL, Y | RL) = if X < Y then {X | mergePairs(LL, Y | RL)} else {Y | mergePairs(X | LL, RL)}이 적용된다.
+    -- 제일 마지막 요소인 1 | nil과 5 | nil을 비교하여 1이 작으므로 {1 | mergePairs(nil, 5 | nil)}이 되고,
+    -- mergePairs(nil, 5 | nil) -> msort(nil) | msort(5 | nil) -> nil | 5 | nil이 되어서
+    -- {1 | 5 | nil}이 되고, 이어서 7 | nil과 {1 | 5 | nil}을 비교하여 1이 작으므로 {1 | mergePairs(7 | nil, 5 | nil)}이 되어
+    -- mergePairs(7 | nil, 5 | nil) -> msort(7 | nil) | msort(5 | nil) -> 7 | nil | 5 | nil이 되어서
+    -- {1 | 5 | 7 | nil}이 된다.
+    -- 이어서 4 | nil과 {1 | 5 | 7 | nil}을 비교하여 1이 작으므로 {1 | mergePairs(nil, 4 | nil)}이 되고,
+    -- mergePairs(nil, 4 | nil) -> msort(nil) | msort(4 | nil) -> nil | 4 | nil이 되어서
+    -- {1 | 4 | nil}이 되고, 이어서 7 | 5 | 1 | nil과 {1 | 4 | nil}을 비교하여 1이 작으므로 {1 | mergePairs(7 | 5 | 1 | nil, 4 | nil)}이 되어
+    -- mergePairs(7 | 5 | 1 | nil, 4 | nil) -> msort(7 | 5 | 1 | nil) | msort(4 | nil) -> 7 | 5 | 1 | nil | 4 | nil이 되어서
+    -- {1 | 4 | 5 | 7 | nil}이 된다.
+}
+
+open MSORT .
+    -- nil이 sort의 맨 마지막이 아니면 [Error]: no successful parse 에러가 발생한다.
+    red msort(4 | 7 | 5 | 1 | 0 | 3 | 6 | 2 | nil) .
+    -- reduce in %MSORT : (msort((4 | (7 | (5 | (1 | (0 | (3 | (6 | (2 | nil)))))))))):NatList
+    -- (0 | (1 | (2 | (3 | (4 | (5 | (6 | (7 | nil)))))))):NnNatList
+    -- (0.0001 sec for parse, 0.0015 sec for 158 rewrites + 364 matches)
+
+    red msort(1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | nil) .
+    -- reduce in %MSORT : (msort((1 | (2 | (3 | (4 | (5 | (6 | (7 | (8 | (9 | (10 | nil)))))))))))):NatList
+    -- (1 | (2 | (3 | (4 | (5 | (6 | (7 | (8 | (9 | (10 | nil)))))))))):NnNatList
+    -- (0.0001 sec for parse, 0.0168 sec for 3578 rewrites + 8178 matches)
+
+    red msort(10 | 9 | 8 | 7 | 6 | 5 | 4 | 3 | 2 | 1 | nil) .
+    -- reduce in %MSORT : (msort((10 | (9 | (8 | (7 | (6 | (5 | (4 | (3 | (2 | (1 | nil)))))))))))):NatList
+    -- (1 | (2 | (3 | (4 | (5 | (6 | (7 | (8 | (9 | (10 | nil)))))))))):NnNatList
+    -- (0.0001 sec for parse, 0.0011 sec for 172 rewrites + 398 matches)
+
+    red msort(1 | 3 | 5 | 7 | 9 | 2 | 4 | 6 | 8 | 10 | nil ) .
+    -- reduce in %MSORT : (msort((1 | (3 | (5 | (7 | (9 | (2 | (4 | (6 | (8 | (10 | nil)))))))))))):NatList
+    -- (1 | (2 | (3 | (4 | (5 | (6 | (7 | (8 | (9 | (10 | nil)))))))))):NnNatList
+    -- (0.0000 sec for parse, 0.0089 sec for 2523 rewrites + 5768 matches)
+close
