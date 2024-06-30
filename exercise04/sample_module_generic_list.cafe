@@ -99,9 +99,24 @@ mod! NATLIST7 {
 
 open NATLIST7 .
     red hd(nlnil) .
+    -- reduce in %NATLIST7 : (hd(nlnil)):ErrNat
+    -- (errNat):ErrNat
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red hd((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    -- reduce in %NATLIST7 : (hd(((4 | (3 | nlnil)) @ (2 | (1 | (0 | nlnil)))))):Nat&Err
+    -- (4):NzNat
+    -- (0.0001 sec for parse, 0.0001 sec for 4 rewrites + 6 matches)
+
     red tl(nlnil) .
+    -- reduce in %NATLIST7 : (tl(nlnil)):NatList
+    -- (nlnil):NLNil
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red tl((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    -- reduce in %NATLIST7 : (tl(((4 | (3 | nlnil)) @ (2 | (1 | (0 | nlnil)))))):NatList
+    -- (3 | (2 | (1 | (0 | nlnil)))):NnNatList
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 7 matches)
 close
 
 
@@ -121,9 +136,24 @@ mod! NATLIST8 {
 
 open NATLIST8 .
     red hd(nlnil) .
+    -- reduce in %NATLIST8 : (hd(nlnil)):ErrNat
+    -- (errNat):ErrNat
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red hd((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    -- reduce in %NATLIST8 : (hd(((4 | (3 | nlnil)) @ (2 | (1 | (0 | nlnil)))))):Nat&Err
+    -- (4):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 6 matches)
+
     red tl(nlnil) .
+    -- reduce in %NATLIST8 : (tl(nlnil)):ErrNatList
+    -- (errNatList):ErrNatList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red tl((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    -- reduce in %NATLIST8 : (tl(((4 | (3 | nlnil)) @ (2 | (1 | (0 | nlnil)))))):NatList&Err
+    -- (3 | (2 | (1 | (0 | nlnil)))):NatList
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 6 matches)
 close
 
 view TRIV-ERR2NATLIST8 from TRIV-ERR to NATLIST8 {
@@ -148,7 +178,22 @@ mod! NATLISTLIST1 {
 
 open NATLISTLIST1 .
     red hd(nllnil) .
+    -- reduce in %NATLISTLIST1 : (hd(nllnil)):ErrNatList
+    -- (errNatList):ErrNatList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red hd((4 | 3 | nlnil) | (2 | 1 | 0 | nlnil) | nllnil) .
+    -- reduce in %NATLISTLIST1 : (hd(((4 | (3 | nlnil)) | ((2 | (1 | (0 | nlnil))) | nllnil)))):NatList&Err
+    -- (4 | (3 | nlnil)):NatList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red tl(nlnil) .
+    -- reduce in %NATLISTLIST1 : (tl(nlnil)):ErrNatList
+    -- (errNatList):ErrNatList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red tl((4 | 3 | nlnil) | (2 | 1 | 0 | nlnil) | nllnil) .
+    -- reduce in %NATLISTLIST1 : (tl(((4 | (3 | nlnil)) | ((2 | (1 | (0 | nlnil))) | nllnil)))):NatListList&Err
+    -- ((2 | (1 | (0 | nlnil))) | nllnil):NatListList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
 close

@@ -34,6 +34,9 @@ view TRIV-ERR-ORD2NAT-ERR from TRIV-ERR-ORD to NAT-ERR {
 
 open GQSORT(E <= TRIV-ERR-ORD2NAT-ERR) .
     red qsort(4 | 7 | 5 | 1 | 0 | 3 | 6 | 2 | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2NAT-ERR) : (qsort((4 | (7 | (5 | (1 | (0 | (3 | (6 | (2 | nil)))))))))):List
+    -- (0 | (1 | (2 | (3 | (4 | (5 | (6 | (7 | nil)))))))):List
+    -- (0.0000 sec for parse, 0.0004 sec for 64 rewrites + 105 matches)
 close
 
 
@@ -53,6 +56,9 @@ view TRIV-ERR-ORD2STRING-ERR from TRIV-ERR-ORD to STRING-ERR {
 
 open GQSORT(E <= TRIV-ERR-ORD2STRING-ERR) .
     red qsort("Lisp" | "Python" | "Pascal" | "CafeOBJ" | "C" | "Java" | "Prolog" | "Fortran" | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2STRING-ERR) : (qsort(("Lisp" | ("Python" | ("Pascal" | ("CafeOBJ" | ("C" | ("Java" | ("Prolog" | ("Fortran" | nil)))))))))):List
+    -- ("C" | ("CafeOBJ" | ("Fortran" | ("Java" | ("Lisp" | ("Pascal" | ("Prolog" | ("Python" | nil)))))))):List
+    -- (0.0000 sec for parse, 0.0003 sec for 64 rewrites + 102 matches)
 close
 
 
@@ -130,6 +136,9 @@ view TRIV-ERR-ORD2NATLIST9 from TRIV-ERR-ORD to NATLIST9 {
 
 open GQSORT(E <= TRIV-ERR-ORD2NATLIST9) .
     red qsort((1 | 2 | nlnil) | (3 | 0 | 2 | nlnil) | (2 | nlnil) | (0 | nlnil) | nlnil | (1 | 1 | nlnil) | (3 | 0 | 1 | nlnil) | (1 | 0 | nlnil) | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2NATLIST9) : (qsort(((1 | (2 | nlnil)) | ((3 | (0 | (2 | nlnil))) | ((2 | nlnil) | ((0 | nlnil) | (nlnil | ((1 | (1 | nlnil)) | ((3 | (0 | (1 | nlnil))) | ((1 | (0 | nlnil)) | nil)))))))))):List
+    -- (nlnil | ((0 | nlnil) | ((1 | (0 | nlnil)) | ((1 | (1 | nlnil)) | ((1 | (2 | nlnil)) | ((2 | nlnil) | ((3 | (0 | (1 | nlnil))) | ((3 | (0 | (2 | nlnil))) | nil)))))))):List
+    -- (0.0001 sec for parse, 0.0009 sec for 183 rewrites + 335 matches)
 close
 
 
@@ -161,4 +170,7 @@ open GQSORT(E <= TRIV-ERR-ORD2STRLIST1) .
               ("CafeOBJ" | "CafeOBJ" | slnil) |
               ("Java" | "C" | "CafeOBJ" | slnil) |
               ("CafeOBJ" | "C" | slnil) | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2STRLIST1) : (qsort((("CafeOBJ" | ("Fortran" | slnil)) | (("Java" | ("C" | ("Fortran" | slnil))) | (("Fortran" | slnil) | (("C" | slnil) | (slnil | (("CafeOBJ" | ("CafeOBJ" | slnil)) | (("Java" | ("C" | ("CafeOBJ" | slnil))) | (("CafeOBJ" | ("C" | slnil)) | nil)))))))))):List
+    -- (slnil | (("C" | slnil) | (("CafeOBJ" | ("C" | slnil)) | (("CafeOBJ" | ("CafeOBJ" | slnil)) | (("CafeOBJ" | ("Fortran" | slnil)) | (("Fortran" | slnil) | (("Java" | ("C" | ("CafeOBJ" | slnil))) | (("Java" | ("C" | ("Fortran" | slnil))) | nil)))))))):List
+    -- (0.0001 sec for parse, 0.0007 sec for 183 rewrites + 329 matches)
 close
