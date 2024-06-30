@@ -18,9 +18,12 @@ mod! ENTRY(K :: TRIV, V :: TRIV-ERR-IF) {
     pr(PAIR(K, V) * {sort Pair -> Entry})
     [Entry ErrEntry < Entry&Err]
     op errEntry : -> ErrEntry {constr} .
-    op (_,_) : Elt.K Elt&Err.V -> Entry&Err . -- V에 에러가 존재할 수 있으므로 Err를 포함한다.
-    var K : Elt.K . -- K에는 에러가 존재하지 않는다고 가정한다.
-    eq (K, err.V) = errEntry . -- 만약 V에 에러가 존재한다면 ErrEntry를 반환한다. (어떤 K가 들어오더라도, V에 에러가 존재하면) = ErrEntry 이다.
+    op (_,_) : Elt.K Elt&Err.V -> Entry&Err . 
+    -- V에 에러가 존재할 수 있으므로 Err를 포함한다.
+    var K : Elt.K . 
+    -- K에는 에러가 존재하지 않는다고 가정한다.
+    eq (K, err.V) = errEntry . 
+    -- 만약 V에 에러가 존재한다면 ErrEntry를 반환한다. (어떤 K가 들어오더라도, V에 에러가 존재하면) = ErrEntry 이다.
 }
 
 
@@ -178,16 +181,67 @@ open TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) .
     eq t = update(update(singleton('java,"Java"),'obj,"OBJ3"),'c,"C").
 
     red t .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (t):Table
+    -- (('java , "Java") | (('obj , "OBJ3") | (('c , "C") | empTable))):Table
+    -- (0.0000 sec for parse, 0.0000 sec for 13 rewrites + 19 matches)
+
     red isReg(t,'obj) .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (isReg(t,'obj)):Bool
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 19 rewrites + 28 matches)
+
     red isReg(t,'mk) .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (isReg(t,'mk)):Bool
+    -- (false):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 23 rewrites + 35 matches)
+
     red lookup(t,'obj) .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (lookup(t,'obj)):String&Err
+    -- ("OBJ3"):String
+    -- (0.0000 sec for parse, 0.0001 sec for 19 rewrites + 28 matches)
+    
     red lookup(t,'mk) .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (lookup(t,'mk)):String&Err
+    -- (errStr):ErrString
+    -- (0.0000 sec for parse, 0.0000 sec for 23 rewrites + 35 matches)
+    
     red update(t,'mk,"SML#") .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (update(t,'mk,"SML#")):Table
+    -- (('java , "Java") | (('obj , "OBJ3") | (('c , "C") | (('mk , "SML#") | empTable)))):Table
+    -- (0.0000 sec for parse, 0.0000 sec for 23 rewrites + 35 matches)
+    
     red update(t,'obj,"CafeOBJ") .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (update(t,'obj,"CafeOBJ")):Table
+    -- (('java , "Java") | (('obj , "CafeOBJ") | (('c , "C") | empTable))):Table
+    -- (0.0000 sec for parse, 0.0000 sec for 19 rewrites + 28 matches)
+    
     red insert(t,'mk,"SML#") .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (insert(t,'mk,"SML#")):Table&Err
+    -- (('mk , "SML#") | (('java , "Java") | (('obj , "OBJ3") | (('c , "C") | empTable)))):Table
+    -- (0.0000 sec for parse, 0.0001 sec for 25 rewrites + 38 matches)
+    
     red insert(t,'obj,"CafeOBJ") .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (insert(t,'obj,"CafeOBJ")):Table&Err
+    -- (errTable):ErrTable
+    -- (0.0000 sec for parse, 0.0000 sec for 21 rewrites + 30 matches)
+    
     red remove(t,'mk) .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (remove(t,'mk)):Table
+    -- (('java , "Java") | (('obj , "OBJ3") | (('c , "C") | empTable))):Table
+    -- (0.0000 sec for parse, 0.0000 sec for 23 rewrites + 35 matches)
+    
     red remove(t,'obj) .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (remove(t,'obj)):Table
+    -- (('java , "Java") | (('c , "C") | empTable)):Table
+    -- (0.0000 sec for parse, 0.0000 sec for 19 rewrites + 28 matches)
+    
     red delete(t,'mk) .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (delete(t,'mk)):Table&Err
+    -- (errTable):ErrTable
+    -- (0.0000 sec for parse, 0.0000 sec for 25 rewrites + 38 matches)
+    
     red delete(t,'obj) .
+    -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (delete(t,'obj)):Table&Err
+    -- (('java , "Java") | (('c , "C") | empTable)):Table
+    -- (0.0000 sec for parse, 0.0001 sec for 27 rewrites + 39 matches)
 close
