@@ -79,15 +79,11 @@ mod! GLIST2(E :: TRIV-ERR) {
     eq (X | L) @ L2 = X | (L @ L2) .
 }
 
--- mod* TRIV-ERR { 
---     [Elt Err < Elt&Err]
---     op err : -> Err .
--- }
-
-view TRIV-ERR2NAT-ERR from TRIV-ERR to NAT-ERR { sort Elt -> Nat,
-sort Err -> ErrNat,
-sort Elt&Err -> Nat&Err,
-op err -> errNat,
+view TRIV-ERR2NAT-ERR from TRIV-ERR to NAT-ERR {
+    sort Elt -> Nat,
+    sort Err -> ErrNat,
+    sort Elt&Err -> Nat&Err,
+    op err -> errNat,
 }
 
 mod! NATLIST7 {

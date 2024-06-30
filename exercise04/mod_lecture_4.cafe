@@ -1,0 +1,319 @@
+mod! GLIST1(E :: TRIV) {
+    [Nil NnList < List]
+    op nil : -> Nil {constr} .
+    op _|_ : Elt.E List -> NnList {constr} .
+    op _@_ : List List -> List .
+
+    var X : Elt.E .
+    vars L L2 : List .
+    eq nil @ L2 = L2 .
+    eq (X | L) @ L2 = X | (L @ L2) .
+}
+
+mod* TRIV-ERR { 
+    [Elt Err < Elt&Err]
+    op err : -> Err .
+}
+
+mod! GLIST-ERR(E :: TRIV-ERR) {
+    [Nil NnList < List]
+    [List ErrList < List&Err]
+    op nil : -> Nil {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+    op errList : -> ErrList {constr} .
+    op _|_ : Elt&Err.E List&Err -> List&Err .
+
+    op hd : Nil -> Err.E .
+    op hd : NnList -> Elt.E .
+    op hd : ErrList -> Err.E .
+    op hd : List&Err -> Elt&Err.E .
+
+    op tl : Nil -> ErrList .
+    op tl : NnList -> List .
+    op tl : ErrList -> ErrList .
+    op tl : List&Err -> List&Err .
+
+    op _@_ : List List -> List .
+    op _@_ : ErrList List&Err -> ErrList .
+    op _@_ : List&Err ErrList -> ErrList .
+    op _@_ : List&Err List&Err -> List&Err .
+    op if_then{_}else{_} : Bool List&Err List&Err -> List&Err .
+
+    var X : Elt.E .
+    var XE : Elt&Err.E .
+    vars L L2 : List .
+    vars LE LE2 : List&Err .
+
+    eq err.E | LE = errList .
+    eq XE | errList = errList .
+    eq hd(nil) = err.E .
+    eq hd(X | L) = X .
+    eq hd(errList) = err.E .
+    eq tl(nil) = errList .
+    eq tl(X | L) = L .
+    eq tl(errList) = errList .
+    eq nil @ L2 = L2 .
+    eq (X | L) @ L2 = X | (L @ L2) .
+    eq errList @ LE = errList .
+    eq LE @ errList = errList .
+    eq if true then {LE} else {LE2} = LE .
+    eq if false then {LE} else {LE2} = LE2 .
+}
+
+mod! GLIST2(E :: TRIV-ERR) {
+    [Nil NnList < List]
+    op nil : -> Nil {constr} .
+    op _|_ : Elt.E List -> NnList {constr} .
+    op hd : Nil -> Err.E .
+    op hd : NnList -> Elt.E .
+    op hd : List -> Elt&Err.E .
+    op tl : List -> List .
+    op _@_ : List List -> List .
+    var X : Elt.E .
+    vars L L2 : List .
+    eq hd(nil) = err.E .
+    eq hd(X | L) = X .
+    eq tl(nil) = nil .
+    eq tl(X | L) = L .
+    eq nil @ L2 = L2 .
+    eq (X | L) @ L2 = X | (L @ L2) .
+}
+
+view TRIV-ERR2NAT-ERR from TRIV-ERR to NAT-ERR {
+    sort Elt -> Nat,
+    sort Err -> ErrNat,
+    sort Elt&Err -> Nat&Err,
+    op err -> errNat,
+}
+
+mod! NATLIST7 {
+    pr(GLIST2(E <= TRIV-ERR2NAT-ERR)
+    * {
+        sort List -> NatList,
+        sort Nil -> NLNil,
+        sort NnList -> NnNatList,
+        op nil -> nlnil
+        }
+    )
+}
+
+open NATLIST7 .
+    red hd(nlnil) .
+    red hd((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    red tl(nlnil) .
+    red tl((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+close
+
+
+mod! NATLIST8 {
+    pr(GLIST-ERR(E <= TRIV-ERR2NAT-ERR)
+    * {
+        sort List -> NatList,
+        sort Nil -> NLNil,
+        sort NnList -> NnNatList,
+        sort ErrList -> ErrNatList,
+        sort List&Err -> NatList&Err,
+        op nil -> nlnil,
+        op errList -> errNatList
+        }
+    )
+}
+
+open NATLIST8 .
+    red hd(nlnil) .
+    red hd((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    red tl(nlnil) .
+    red tl((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+close
+
+view TRIV-ERR2NATLIST8 from TRIV-ERR to NATLIST8 {
+    sort Elt -> NatList,
+    sort Err -> ErrNatList,
+    sort Elt&Err -> NatList&Err,
+    op err -> errNatList,
+}
+
+mod! NATLISTLIST1 { 
+    pr(GLIST-ERR(E <= TRIV-ERR2NATLIST8)
+    * {
+        sort List -> NatListList,
+        sort Nil -> NLLNil,
+        sort NnList -> NnNatListList,
+        sort ErrList -> ErrNatListList,
+        sort List&Err -> NatListList&Err,
+        op nil -> nllnil, 
+        op errList -> errNatListList,
+    })
+}
+
+open NATLISTLIST1 .
+    red hd(nllnil) .
+    red hd((4 | 3 | nlnil) | (2 | 1 | 0 | nlnil) | nllnil) .
+    red tl(nlnil) .
+    red tl((4 | 3 | nlnil) | (2 | 1 | 0 | nlnil) | nllnil) .
+close
+
+mod* TRIV-ERR-ORD {
+    [Elt Err < Elt&Err]
+    op err : -> Err .
+    op ord : Elt Elt -> Bool .
+}
+
+mod! GQSORT(E :: TRIV-ERR-ORD) {
+    -- imports
+    pr(GLIST-ERR(E))
+    
+    -- signature
+    op qsort : List -> List .
+    op partition : Elt.E List List List -> List .
+    -- CafeOBJ vars
+    vars X Y : Elt.E .
+    vars L LL RL : List .
+
+    eq qsort(nil) = nil .
+    eq qsort(X | nil) = X | nil .
+    eq qsort(X | Y | L) = partition(X, Y | L, nil, nil) .
+    
+    -- partition
+    eq partition(X, nil, LL, RL) = qsort(LL) @ (X | qsort(RL)).
+    eq partition(X, Y | L, LL, RL) = if ord.E(Y, X) then {partition(X, L, Y | LL, RL)} else {partition(X,L,LL,Y | RL)} . 
+}
+
+view TRIV-ERR-ORD2NAT-ERR from TRIV-ERR-ORD to NAT-ERR {
+    sort Elt -> Nat,
+    sort Err -> ErrNat,
+    sort Elt&Err -> Nat&Err,
+    op err -> errNat,
+    op ord -> _<_,
+}
+
+open GQSORT(E <= TRIV-ERR-ORD2NAT-ERR) .
+    red qsort(4 | 7 | 5 | 1 | 0 | 3 | 6 | 2 | nil) .
+close
+
+
+mod! STRING-ERR { 
+    pr(STRING)
+    [String ErrString < String&Err] 
+    op errStr : -> ErrString {constr} .
+}
+
+view TRIV-ERR-ORD2STRING-ERR from TRIV-ERR-ORD to STRING-ERR {
+    sort Elt -> String,
+    sort Err -> ErrString,
+    sort Elt&Err -> String&Err,
+    op err -> errStr,
+    op ord -> string<,
+}
+
+open GQSORT(E <= TRIV-ERR-ORD2STRING-ERR) .
+    red qsort("Lisp" | "Python" | "Pascal" | "CafeOBJ" | "C" | "Java" | "Prolog" | "Fortran" | nil) .
+close
+
+
+mod! GLIST-ERR-ORD(E :: TRIV-ERR-ORD) {
+    [Nil NnList < List]
+    [List ErrList < List&Err]
+    op nil : -> Nil {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+    op errList : -> ErrList {constr} .
+    op _|_ : Elt&Err.E List&Err -> List&Err .
+
+    op hd : Nil -> Err.E .
+    op hd : NnList -> Elt.E .
+    op hd : ErrList -> Err.E .
+    op hd : List&Err -> Elt&Err.E .
+
+    op tl : Nil -> ErrList .
+    op tl : NnList -> List .
+    op tl : ErrList -> ErrList .
+    op tl : List&Err -> List&Err .
+
+    op _@_ : List List -> List .
+    op _@_ : ErrList List&Err -> ErrList .
+    op _@_ : List&Err ErrList -> ErrList .
+    op _@_ : List&Err List&Err -> List&Err .
+    op if_then{_}else{_} : Bool List&Err List&Err -> List&Err .
+    -- append (different with GLIST-ERR)
+    op ord : List List -> Bool .
+
+    vars X Y : Elt.E .
+    var XE : Elt&Err.E .
+    vars L L2 : List .
+    vars LE LE2 : List&Err .
+
+    eq err.E | LE = errList .
+    eq XE | errList = errList .
+    eq hd(nil) = err.E .
+    eq hd(X | L) = X .
+    eq hd(errList) = err.E .
+    eq tl(nil) = errList .
+    eq tl(X | L) = L .
+    eq tl(errList) = errList .
+    eq nil @ L2 = L2 .
+    eq (X | L) @ L2 = X | (L @ L2) .
+    eq errList @ LE = errList .
+    eq LE @ errList = errList .
+    eq if true then {LE} else {LE2} = LE .
+    eq if false then {LE} else {LE2} = LE2 .
+    -- append (different with GLIST-ERR)
+    eq ord(nil, nil) = false .
+    eq ord(nil, Y | L2) = true .
+    eq ord(X | L, nil) = false .
+    eq ord(X | L, Y | L2) = ord.E(X, Y) or ((not ord.E(Y, X)) and ord(L, L2)) .
+}
+
+mod! NATLIST9 {
+    pr(GLIST-ERR-ORD(E <= TRIV-ERR-ORD2NAT-ERR) * {
+        sort List -> NatList,
+        sort Nil -> NLNil,
+        sort NnList -> NnNatList,
+        sort ErrList -> ErrNatList,
+        sort List&Err -> NatList&Err,
+        op nil -> nlnil,
+        op errList -> errNatList
+    })
+}
+
+view TRIV-ERR-ORD2NATLIST9 from TRIV-ERR-ORD to NATLIST9 {
+    sort Elt -> NatList,
+    sort Err -> ErrNatList,
+    sort Elt&Err -> NatList&Err,
+    op err -> errNatList,
+    op ord -> ord,
+}
+
+open GQSORT(E <= TRIV-ERR-ORD2NATLIST9) .
+    red qsort((1 | 2 | nlnil) | (3 | 0 | 2 | nlnil) | (2 | nlnil) | (0 | nlnil) | nlnil | (1 | 1 | nlnil) | (3 | 0 | 1 | nlnil) | (1 | 0 | nlnil) | nil) .
+close
+
+
+mod! STRLIST1 { 
+    pr(GLIST-ERR-ORD(E <= TRIV-ERR-ORD2STRING-ERR) 
+    * {
+        sort List -> StrList,
+        sort Nil -> SLNil,
+        sort NnList -> NnStrList,
+        sort ErrList -> ErrStrList,
+        sort List&Err -> StrList&Err,
+        op nil -> slnil,
+        op errList -> errStrList 
+    })
+}
+
+view TRIV-ERR-ORD2STRLIST1 from TRIV-ERR-ORD to STRLIST1 {
+    sort Elt -> StrList,
+    sort Err -> ErrStrList,
+    sort Elt&Err -> StrList&Err,
+    op err -> errStrList,
+    op ord -> ord,
+}
+
+open GQSORT(E <= TRIV-ERR-ORD2STRLIST1) .
+    red qsort(("CafeOBJ" | "Fortran" | slnil) |
+              ("Java" | "C" | "Fortran" | slnil) |
+              ("Fortran" | slnil) | ("C" | slnil) | slnil |
+              ("CafeOBJ" | "CafeOBJ" | slnil) |
+              ("Java" | "C" | "CafeOBJ" | slnil) |
+              ("CafeOBJ" | "C" | slnil) | nil) .
+close
