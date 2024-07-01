@@ -10,6 +10,32 @@ mod! GLIST1(E :: TRIV) {
     eq (X | L) @ L2 = X | (L @ L2) .
 }
 
+view TRIV2NAT from TRIV to NAT {
+    sort Elt -> Nat,
+}
+
+mod! NATLIST1 {
+    pr(GLIST1(E <= TRIV2NAT))
+}
+
+open NATLIST1 .
+    red (4 | 3 | nil) @ (2 | 1 | 0 | nil) .
+    -- reduce in %NATLIST1 : ((4 | (3 | nil)) @ (2 | (1 | (0 | nil)))):List
+    -- (4 | (3 | (2 | (1 | (0 | nil))))):NnList
+    -- (0.0001 sec for parse, 0.0001 sec for 3 rewrites + 5 matches)
+close
+
+mod! NATLIST2 {
+    pr(GLIST1(E <= view from TRIV to NAT {
+        sort Elt -> Nat,
+        }
+    ))
+}
+
+mod! NATLIST3 {
+    pr(GLIST1(NAT))
+}
+
 mod* TRIV-ERR { 
     [Elt Err < Elt&Err]
     op err : -> Err .
@@ -99,9 +125,24 @@ mod! NATLIST7 {
 
 open NATLIST7 .
     red hd(nlnil) .
+    -- reduce in %NATLIST7 : (hd(nlnil)):ErrNat
+    -- (errNat):ErrNat
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red hd((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    -- reduce in %NATLIST7 : (hd(((4 | (3 | nlnil)) @ (2 | (1 | (0 | nlnil)))))):Nat&Err
+    -- (4):NzNat
+    -- (0.0001 sec for parse, 0.0001 sec for 4 rewrites + 6 matches)
+
     red tl(nlnil) .
+    -- reduce in %NATLIST7 : (tl(nlnil)):NatList
+    -- (nlnil):NLNil
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red tl((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    -- reduce in %NATLIST7 : (tl(((4 | (3 | nlnil)) @ (2 | (1 | (0 | nlnil)))))):NatList
+    -- (3 | (2 | (1 | (0 | nlnil)))):NnNatList
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 7 matches)
 close
 
 
@@ -121,9 +162,24 @@ mod! NATLIST8 {
 
 open NATLIST8 .
     red hd(nlnil) .
+    -- reduce in %NATLIST8 : (hd(nlnil)):ErrNat
+    -- (errNat):ErrNat
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red hd((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    -- reduce in %NATLIST8 : (hd(((4 | (3 | nlnil)) @ (2 | (1 | (0 | nlnil)))))):Nat&Err
+    -- (4):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 6 matches)
+
     red tl(nlnil) .
+    -- reduce in %NATLIST8 : (tl(nlnil)):ErrNatList
+    -- (errNatList):ErrNatList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red tl((4 | 3 | nlnil) @ (2 | 1 | 0 | nlnil)) .
+    -- reduce in %NATLIST8 : (tl(((4 | (3 | nlnil)) @ (2 | (1 | (0 | nlnil)))))):NatList&Err
+    -- (3 | (2 | (1 | (0 | nlnil)))):NatList
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 6 matches)
 close
 
 view TRIV-ERR2NATLIST8 from TRIV-ERR to NATLIST8 {
@@ -148,9 +204,24 @@ mod! NATLISTLIST1 {
 
 open NATLISTLIST1 .
     red hd(nllnil) .
+    -- reduce in %NATLISTLIST1 : (hd(nllnil)):ErrNatList
+    -- (errNatList):ErrNatList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red hd((4 | 3 | nlnil) | (2 | 1 | 0 | nlnil) | nllnil) .
+    -- reduce in %NATLISTLIST1 : (hd(((4 | (3 | nlnil)) | ((2 | (1 | (0 | nlnil))) | nllnil)))):NatList&Err
+    -- (4 | (3 | nlnil)):NatList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red tl(nlnil) .
+    -- reduce in %NATLISTLIST1 : (tl(nlnil)):ErrNatList
+    -- (errNatList):ErrNatList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
     red tl((4 | 3 | nlnil) | (2 | 1 | 0 | nlnil) | nllnil) .
+    -- reduce in %NATLISTLIST1 : (tl(((4 | (3 | nlnil)) | ((2 | (1 | (0 | nlnil))) | nllnil)))):NatListList&Err
+    -- ((2 | (1 | (0 | nlnil))) | nllnil):NatListList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
 close
 
 mod* TRIV-ERR-ORD {
@@ -189,6 +260,9 @@ view TRIV-ERR-ORD2NAT-ERR from TRIV-ERR-ORD to NAT-ERR {
 
 open GQSORT(E <= TRIV-ERR-ORD2NAT-ERR) .
     red qsort(4 | 7 | 5 | 1 | 0 | 3 | 6 | 2 | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2NAT-ERR) : (qsort((4 | (7 | (5 | (1 | (0 | (3 | (6 | (2 | nil)))))))))):List
+    -- (0 | (1 | (2 | (3 | (4 | (5 | (6 | (7 | nil)))))))):List
+    -- (0.0000 sec for parse, 0.0004 sec for 64 rewrites + 105 matches)
 close
 
 
@@ -208,6 +282,9 @@ view TRIV-ERR-ORD2STRING-ERR from TRIV-ERR-ORD to STRING-ERR {
 
 open GQSORT(E <= TRIV-ERR-ORD2STRING-ERR) .
     red qsort("Lisp" | "Python" | "Pascal" | "CafeOBJ" | "C" | "Java" | "Prolog" | "Fortran" | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2STRING-ERR) : (qsort(("Lisp" | ("Python" | ("Pascal" | ("CafeOBJ" | ("C" | ("Java" | ("Prolog" | ("Fortran" | nil)))))))))):List
+    -- ("C" | ("CafeOBJ" | ("Fortran" | ("Java" | ("Lisp" | ("Pascal" | ("Prolog" | ("Python" | nil)))))))):List
+    -- (0.0000 sec for parse, 0.0003 sec for 64 rewrites + 102 matches)
 close
 
 
@@ -285,6 +362,9 @@ view TRIV-ERR-ORD2NATLIST9 from TRIV-ERR-ORD to NATLIST9 {
 
 open GQSORT(E <= TRIV-ERR-ORD2NATLIST9) .
     red qsort((1 | 2 | nlnil) | (3 | 0 | 2 | nlnil) | (2 | nlnil) | (0 | nlnil) | nlnil | (1 | 1 | nlnil) | (3 | 0 | 1 | nlnil) | (1 | 0 | nlnil) | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2NATLIST9) : (qsort(((1 | (2 | nlnil)) | ((3 | (0 | (2 | nlnil))) | ((2 | nlnil) | ((0 | nlnil) | (nlnil | ((1 | (1 | nlnil)) | ((3 | (0 | (1 | nlnil))) | ((1 | (0 | nlnil)) | nil)))))))))):List
+    -- (nlnil | ((0 | nlnil) | ((1 | (0 | nlnil)) | ((1 | (1 | nlnil)) | ((1 | (2 | nlnil)) | ((2 | nlnil) | ((3 | (0 | (1 | nlnil))) | ((3 | (0 | (2 | nlnil))) | nil)))))))):List
+    -- (0.0001 sec for parse, 0.0009 sec for 183 rewrites + 335 matches)
 close
 
 
@@ -316,4 +396,7 @@ open GQSORT(E <= TRIV-ERR-ORD2STRLIST1) .
               ("CafeOBJ" | "CafeOBJ" | slnil) |
               ("Java" | "C" | "CafeOBJ" | slnil) |
               ("CafeOBJ" | "C" | slnil) | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2STRLIST1) : (qsort((("CafeOBJ" | ("Fortran" | slnil)) | (("Java" | ("C" | ("Fortran" | slnil))) | (("Fortran" | slnil) | (("C" | slnil) | (slnil | (("CafeOBJ" | ("CafeOBJ" | slnil)) | (("Java" | ("C" | ("CafeOBJ" | slnil))) | (("CafeOBJ" | ("C" | slnil)) | nil)))))))))):List
+    -- (slnil | (("C" | slnil) | (("CafeOBJ" | ("C" | slnil)) | (("CafeOBJ" | ("CafeOBJ" | slnil)) | (("CafeOBJ" | ("Fortran" | slnil)) | (("Fortran" | slnil) | (("Java" | ("C" | ("CafeOBJ" | slnil))) | (("Java" | ("C" | ("Fortran" | slnil))) | nil)))))))):List
+    -- (0.0001 sec for parse, 0.0007 sec for 183 rewrites + 329 matches)
 close

@@ -10,6 +10,32 @@ mod! GLIST1(E :: TRIV) {
     eq (X | L) @ L2 = X | (L @ L2) .
 }
 
+view TRIV2NAT from TRIV to NAT {
+    sort Elt -> Nat,
+}
+
+mod! NATLIST1 {
+    pr(GLIST1(E <= TRIV2NAT))
+}
+
+open NATLIST1 .
+    red (4 | 3 | nil) @ (2 | 1 | 0 | nil) .
+    -- reduce in %NATLIST1 : ((4 | (3 | nil)) @ (2 | (1 | (0 | nil)))):List
+    -- (4 | (3 | (2 | (1 | (0 | nil))))):NnList
+    -- (0.0001 sec for parse, 0.0001 sec for 3 rewrites + 5 matches)
+close
+
+mod! NATLIST2 {
+    pr(GLIST1(E <= view from TRIV to NAT {
+        sort Elt -> Nat,
+        }
+    ))
+}
+
+mod! NATLIST3 {
+    pr(GLIST1(NAT))
+}
+
 mod* TRIV-ERR { 
     [Elt Err < Elt&Err]
     op err : -> Err .
