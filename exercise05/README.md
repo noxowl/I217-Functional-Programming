@@ -1,5 +1,5 @@
 # I217: Functional Programming
-## 4. Parameterized Modules
+## 5. Tables (or Maps or Dictionaries)
 ### Exercises
 1. Write all programs in the slides including the appendices and feed them into the CafeOBJ system. Moreover, write some more test code and do some more testing for the programs.
 2. Revise the programs used in the slides such that binary‐ search trees are used instead of lists.
