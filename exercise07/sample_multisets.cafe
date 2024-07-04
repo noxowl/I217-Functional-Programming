@@ -1,0 +1,40 @@
+mod! MULTISET(E :: TRIV) {
+-- An element is also a singleton multiset. 
+[Elt.E < MSet]
+-- The empty multiset.
+op emp : -> MSet {constr} .
+-- blank operator can be used to create a multiset from a set.
+op _ _ : MSet MSet -> MSet {constr assoc comm id: emp} .
+}
+
+open MULTISET(NAT) .
+    red (1 2) 3 == 1 (2 3) .
+    -- reduce in %MULTISET(E <= NAT) : ((1 (2 3)) == (1 (2 3))):Bool
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 1 rewrites + 9 matches)
+
+    red 1 2 == 2 1 .
+    -- reduce in %MULTISET(E <= NAT) : ((1 2) == (2 1)):Bool
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 5 matches)
+
+    red 1 1 1 2 2 == 1 2 1 1 2 .
+    -- reduce in %MULTISET(E <= NAT) : ((1 (1 (2 (1 2)))) == (1 (2 (1 (1 2))))):Bool
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0001 sec for 1 rewrites + 45 matches)
+
+    red emp 1 emp 2 emp 1 emp 1 emp 2 emp .
+    -- reduce in %MULTISET(E <= NAT) : ((1 2) (1 (2 (1 (emp (emp (emp (emp (emp emp))))))))):MSet
+    -- (1 (1 (2 (2 1)))):MSet
+    -- (0.0009 sec for parse, 0.0000 sec for 6 rewrites + 14 matches)
+
+    red emp .
+    -- reduce in %MULTISET(E <= NAT) : (emp):MSet
+    -- (emp):MSet
+    -- (0.0000 sec for parse, 0.0000 sec for 0 rewrites + 0 matches)
+
+    red emp emp .
+    -- reduce in %MULTISET(E <= NAT) : (emp emp):MSet
+    -- (emp):MSet
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+close

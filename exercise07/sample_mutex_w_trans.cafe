@@ -1,0 +1,67 @@
+mod! TID {
+    [Tid]
+    ops t1 t2 t3 t4 : -> Tid {constr} .
+}
+
+mod! LOC {
+    [Loc]
+    ops rs ms cs ws es ds : -> Loc {constr} .
+}
+
+mod! STATE2 {
+    pr(LOC)
+    [State2]
+    op (locked:_,pc1:_,pc2:_) : Bool Loc Loc -> State2 {constr} .
+}
+
+mod! FMUTEX2 {
+    pr(STATE2)
+    pr(TID)
+    vars L1 L2 : Loc .
+    var B : Bool .
+    -- t1
+    trans [want1] : (locked: false,pc1: rs,pc2: L2) => (locked: false,pc1: ms,pc2: L2) .
+    trans [try1] : (locked: B,pc1: ms,pc2: L2) => (locked: true,pc1: cs,pc2: L2) .
+    trans [exit1] : (locked: B,pc1: cs,pc2: L2) => (locked: false,pc1: rs,pc2: L2) .
+    -- t2
+    trans [want2] : (locked: false,pc1: L1,pc2: rs) => (locked: false,pc1: L1,pc2: ms) .
+    trans [try2] : (locked: B,pc1: L1,pc2: ms) => (locked: true,pc1: L1,pc2: cs) .
+    trans [exit2] : (locked: B,pc1: L1,pc2: cs) => (locked: false,pc1: L1,pc2: rs) .
+}
+
+open FMUTEX2 .
+    red (locked: false, pc1: rs, pc2: rs) =(1,*)=>* (locked: B, pc1: cs, pc2: cs) .
+    -- reduce in %FMUTEX2 : ((locked: false , pc1: rs , pc2: rs) = ( 1 , * ) =>* (locked: B , pc1: cs , pc2: cs)):Bool
+    -- ** Found [state 0-8] (locked: true , pc1: cs , pc2: cs):State2
+    -- target: (locked: B , pc1: cs , pc2: cs)
+    --     { B |-> true, B |-> true, L1 |-> cs }
+    -- 
+    -- -- found required number of solutions 1.
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0004 sec for 15 rewrites + 1 matches, 6 memo hits)
+    
+close
+
+open FMUTEX2 .
+    red (locked: false, pc1: rs, pc2: rs) =(1,*)=>* (locked: B, pc1: cs, pc2: cs) .
+    show path 0-8 . 
+    -- opening module FMUTEX2 done.
+    -- reduce in %FMUTEX2 : ((locked: false , pc1: rs , pc2: rs) = ( 1 , * ) =>* (locked: B , pc1: cs , pc2: cs)):Bool
+    ** Found [state 0-8] (locked: true , pc1: cs , pc2: cs):State2
+    -- target: (locked: B , pc1: cs , pc2: cs)
+    --     { B |-> true, B |-> true, L1 |-> cs }
+
+    -- found required number of solutions 1.
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0003 sec for 15 rewrites + 1 matches, 6 memo hits)
+    -- [state 0-0] (locked: false , pc1: rs , pc2: rs):State2
+    --   trans [want1]: (locked: false , pc1: rs , pc2: L2) => (locked: false , pc1: ms , pc2: L2)
+    -- [state 0-1] (locked: false , pc1: ms , pc2: rs):State2
+    --   trans [want2]: (locked: false , pc1: L1 , pc2: rs) => (locked: false , pc1: L1 , pc2: ms)
+    -- [state 0-4] (locked: false , pc1: ms , pc2: ms):State2
+    --   trans [try1]: (locked: B , pc1: ms , pc2: L2) => (locked: true , pc1: cs , pc2: L2)
+    -- [state 0-6] (locked: true , pc1: cs , pc2: ms):State2
+    --   trans [try2]: (locked: B , pc1: L1 , pc2: ms) => (locked: true , pc1: L1 , pc2: cs)
+    -- [state 0-8] (locked: true , pc1: cs , pc2: cs):State2
+    --     { B |-> true, B |-> true, L1 |-> cs }
+close

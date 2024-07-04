@@ -1,0 +1,61 @@
+-- Loop: “Remainder Section”
+--     rs: while test&set(locked) = true {}
+--         “Critical Section”
+--     cs: locked := false;
+--
+-- test&set(x) does the following atomically:
+-- tmp := x;
+-- x := true;
+-- return tmp;
+
+mod! STATE3 {
+    pr(LOC)
+    [State3]
+    op (locked:_,pc1:_,pc2:_,pc3:_) : Bool Loc Loc Loc -> State3 {constr} .
+}
+
+mod! MUTEX3 {
+    pr(STATE3)
+    pr(TID)
+    vars L1 L2 L3 : Loc .
+    var B : Bool .
+    -- t1
+    trans [try1] : (locked: false,pc1: rs,pc2: L2,pc3: L3) => (locked: true,pc1: cs,pc2: L2,pc3: L3) .
+    trans [exit1] : (locked: B,pc1: cs,pc2: L2,pc3: L3) => (locked: false,pc1: rs,pc2: L2,pc3: L3) .
+    -- t2
+    trans [try2] : (locked: false,pc1: L1,pc2: rs,pc3: L3) => (locked: true,pc1: L1,pc2: cs,pc3: L3) .
+    trans [exit2] : (locked: B,pc1: L1,pc2: cs,pc3: L3) => (locked: false,pc1: L1,pc2: rs,pc3: L3) .
+    -- t3
+    trans [try2] : (locked: false,pc1: L1,pc2: L2,pc3: rs) => (locked: true,pc1: L1,pc2: L2,pc3: cs) .
+    trans [exit2] : (locked: B,pc1: L1,pc2: L2,pc3: cs) => (locked: false,pc1: L1,pc2: L2,pc3: rs) .
+}
+
+open MUTEX3 .
+    red (locked: false, pc1: rs, pc2: rs, pc3: rs)
+    =(1,*)=>* (locked: B, pc1: L1, pc2: L2, pc3: L3)
+    suchThat (L1 == cs and L2 == cs) or (L1 == cs and L3 == cs)
+    or (L2 == cs and L3 == cs) .
+    -- reduce in %MUTEX3 : (((locked: false , pc1: rs , pc2: rs , pc3: rs) = ( 1 , * ) =>* (locked: B , pc1: L1 , pc2: L2 , pc3: L3) suchThat ((L1 == cs) and (L2 == cs))) or (((L1 == cs) and (L3 == cs)) or ((L2 == cs) and (L3 == cs)))):Bool
+    ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0003 sec for parse, 0.0004 sec for 27 rewrites + 21 matches, 3 memo hits)
+close
+
+mod! MUTEX {
+    pr(STATE)
+    vars T T1 T2 : Tid .
+    var B : Bool .
+    var OCs : OComps .
+    trans [try] : {(locked: false) (pc[T]: rs) OCs} => {(locked: true) (pc[T]: cs) OCs} .
+    trans [exit] : {(locked: B) (pc[T]: cs) OCs} => {(locked: false) (pc[T]: rs) OCs} . 
+}
+
+open MUTEX .
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs)} =(1,*)=>* {
+        (pc[T1]: cs) (pc[T2]: cs) OCs
+    } .
+    -- reduce in %MUTEX : (({ ((pc [ t3 ] : rs) ((pc [ t2 ] : rs) ((locked: false) (pc [ t1 ] : rs)))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0002 sec for parse, 0.0005 sec for 7 rewrites + 85 matches, 3 memo hits)
+close

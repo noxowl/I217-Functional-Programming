@@ -1,0 +1,56 @@
+-- state representation with multisets
+
+in sample_multisets
+
+mod! OCOMP principal-sort OComp {
+    pr(TID)
+    pr(LOC)
+    [OComp]
+    op (pc[_]:_) : Tid Loc -> OComp {constr} .
+    op (locked:_) : Bool -> OComp {constr} .
+}
+
+mod! STATE {
+    pr(MULTISET(OCOMP) * {
+        sort MSet -> OComps
+        }
+    )
+    [State]
+    op {_} : OComps -> State {constr} .
+}
+
+mod! FMUTEX { pr(STATE)
+    vars T T1 T2 : Tid . var B : Bool .
+    var OCs : OComps .
+    
+    trans [want] : {(locked: false) (pc[T]: rs) OCs} => {(locked: false) (pc[T]: ms) OCs} .
+    trans [try] : {(locked: B) (pc[T]: ms) OCs} => {(locked: true) (pc[T]: cs) OCs} .
+    trans [exit] : {(locked: B) (pc[T]: cs) OCs} => {(locked: false) (pc[T]: rs) OCs} .
+}
+
+open FMUTEX .
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs)} =(1,*)=>* {
+        (pc[T1]: cs) (pc[T2]: cs) OCs
+    } .
+    -- reduce in %FMUTEX : (({ ((locked: false) ((pc [ t1 ] : rs) (pc [ t2 ] : rs))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** Found [state 0-8] ({ ((pc [ t1 ] : cs) ((pc [ t2 ] : cs) (locked: true))) }):State
+    -- target: ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })
+    -- { T2 |-> t2, T1 |-> t1, OCs |-> (locked: true), T |-> t1, B |-> true, OCs |-> (pc [ t2 ] : cs) }
+    -- { T2 |-> t1, T1 |-> t2, OCs |-> (locked: true), T |-> t1, B |-> true, OCs |-> (pc [ t2 ] : cs) }
+    -- found required number of solutions 1.
+    -- (true):Bool
+    -- (0.0002 sec for parse, 0.0009 sec for 15 rewrites + 61 matches, 6 memo hits)
+
+    show path 0-8 .
+    -- [state 0-0] ({ ((pc [ t1 ] : rs) ((pc [ t2 ] : rs) (locked: false))) }):State
+    --   trans [want]: ({ ((locked: false) ((pc [ T ] : rs) OCs)) }) => ({ ((locked: false) ((pc [ T ] : ms) OCs)) })
+    -- [state 0-1] ({ ((pc [ t1 ] : ms) ((pc [ t2 ] : rs) (locked: false))) }):State
+    --   trans [want]: ({ ((locked: false) ((pc [ T ] : rs) OCs)) }) => ({ ((locked: false) ((pc [ T ] : ms) OCs)) })
+    -- [state 0-3] ({ ((pc [ t2 ] : ms) ((pc [ t1 ] : ms) (locked: false))) }):State
+    --   trans [try]: ({ ((locked: B) ((pc [ T ] : ms) OCs)) }) => ({ ((locked: true) ((pc [ T ] : cs) OCs)) })
+    -- [state 0-6] ({ ((pc [ t2 ] : cs) ((pc [ t1 ] : ms) (locked: true))) }):State
+    --   trans [try]: ({ ((locked: B) ((pc [ T ] : ms) OCs)) }) => ({ ((locked: true) ((pc [ T ] : cs) OCs)) })
+    -- [state 0-8] ({ ((pc [ t1 ] : cs) ((pc [ t2 ] : cs) (locked: true))) }):State
+    -- { T2 |-> t2, T1 |-> t1, OCs |-> (locked: true), T |-> t1, B |-> true, OCs |-> (pc [ t2 ] : cs) }
+    -- { T2 |-> t1, T1 |-> t2, OCs |-> (locked: true), T |-> t1, B |-> true, OCs |-> (pc [ t2 ] : cs) }
+close

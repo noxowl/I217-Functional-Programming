@@ -1,0 +1,361 @@
+mod! TID {
+    [Tid]
+    ops t1 t2 t3 t4 : -> Tid {constr} .
+}
+
+mod! LOC {
+    [Loc]
+    ops rs ms cs ws es ds : -> Loc {constr} .
+}
+
+mod! STATE2 {
+    pr(LOC)
+    [State2]
+    op (locked:_,pc1:_,pc2:_) : Bool Loc Loc -> State2 {constr} .
+}
+
+mod! FMUTEX2 {
+    pr(STATE2)
+    pr(TID)
+    vars L1 L2 : Loc .
+    var B : Bool .
+    -- t1
+    trans [want1] : (locked: false,pc1: rs,pc2: L2) => (locked: false,pc1: ms,pc2: L2) .
+    trans [try1] : (locked: B,pc1: ms,pc2: L2) => (locked: true,pc1: cs,pc2: L2) .
+    trans [exit1] : (locked: B,pc1: cs,pc2: L2) => (locked: false,pc1: rs,pc2: L2) .
+    -- t2
+    trans [want2] : (locked: false,pc1: L1,pc2: rs) => (locked: false,pc1: L1,pc2: ms) .
+    trans [try2] : (locked: B,pc1: L1,pc2: ms) => (locked: true,pc1: L1,pc2: cs) .
+    trans [exit2] : (locked: B,pc1: L1,pc2: cs) => (locked: false,pc1: L1,pc2: rs) .
+}
+
+open FMUTEX2 .
+    red (locked: false, pc1: rs, pc2: rs) =(1,*)=>* (locked: B, pc1: cs, pc2: cs) .
+    -- reduce in %FMUTEX2 : ((locked: false , pc1: rs , pc2: rs) = ( 1 , * ) =>* (locked: B , pc1: cs , pc2: cs)):Bool
+    -- ** Found [state 0-8] (locked: true , pc1: cs , pc2: cs):State2
+    -- target: (locked: B , pc1: cs , pc2: cs)
+    --     { B |-> true, B |-> true, L1 |-> cs }
+    -- 
+    -- -- found required number of solutions 1.
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0004 sec for 15 rewrites + 1 matches, 6 memo hits)
+    
+close
+
+open FMUTEX2 .
+    red (locked: false, pc1: rs, pc2: rs) =(1,*)=>* (locked: B, pc1: cs, pc2: cs) .
+    show path 0-8 . 
+    -- opening module FMUTEX2 done.
+    -- reduce in %FMUTEX2 : ((locked: false , pc1: rs , pc2: rs) = ( 1 , * ) =>* (locked: B , pc1: cs , pc2: cs)):Bool
+    ** Found [state 0-8] (locked: true , pc1: cs , pc2: cs):State2
+    -- target: (locked: B , pc1: cs , pc2: cs)
+    --     { B |-> true, B |-> true, L1 |-> cs }
+
+    -- found required number of solutions 1.
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0003 sec for 15 rewrites + 1 matches, 6 memo hits)
+    -- [state 0-0] (locked: false , pc1: rs , pc2: rs):State2
+    --   trans [want1]: (locked: false , pc1: rs , pc2: L2) => (locked: false , pc1: ms , pc2: L2)
+    -- [state 0-1] (locked: false , pc1: ms , pc2: rs):State2
+    --   trans [want2]: (locked: false , pc1: L1 , pc2: rs) => (locked: false , pc1: L1 , pc2: ms)
+    -- [state 0-4] (locked: false , pc1: ms , pc2: ms):State2
+    --   trans [try1]: (locked: B , pc1: ms , pc2: L2) => (locked: true , pc1: cs , pc2: L2)
+    -- [state 0-6] (locked: true , pc1: cs , pc2: ms):State2
+    --   trans [try2]: (locked: B , pc1: L1 , pc2: ms) => (locked: true , pc1: L1 , pc2: cs)
+    -- [state 0-8] (locked: true , pc1: cs , pc2: cs):State2
+    --     { B |-> true, B |-> true, L1 |-> cs }
+close
+
+-- ------------------------------
+-- multisets
+-- ------------------------------
+
+mod! MULTISET(E :: TRIV) {
+-- An element is also a singleton multiset. 
+[Elt.E < MSet]
+-- The empty multiset.
+op emp : -> MSet {constr} .
+-- blank operator can be used to create a multiset from a set.
+op _ _ : MSet MSet -> MSet {constr assoc comm id: emp} .
+}
+
+open MULTISET(NAT) .
+    red (1 2) 3 == 1 (2 3) .
+    -- reduce in %MULTISET(E <= NAT) : ((1 (2 3)) == (1 (2 3))):Bool
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 1 rewrites + 9 matches)
+
+    red 1 2 == 2 1 .
+    -- reduce in %MULTISET(E <= NAT) : ((1 2) == (2 1)):Bool
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 5 matches)
+
+    red 1 1 1 2 2 == 1 2 1 1 2 .
+    -- reduce in %MULTISET(E <= NAT) : ((1 (1 (2 (1 2)))) == (1 (2 (1 (1 2))))):Bool
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0001 sec for 1 rewrites + 45 matches)
+
+    red emp 1 emp 2 emp 1 emp 1 emp 2 emp .
+    -- reduce in %MULTISET(E <= NAT) : ((1 2) (1 (2 (1 (emp (emp (emp (emp (emp emp))))))))):MSet
+    -- (1 (1 (2 (2 1)))):MSet
+    -- (0.0009 sec for parse, 0.0000 sec for 6 rewrites + 14 matches)
+
+    red emp .
+    -- reduce in %MULTISET(E <= NAT) : (emp):MSet
+    -- (emp):MSet
+    -- (0.0000 sec for parse, 0.0000 sec for 0 rewrites + 0 matches)
+
+    red emp emp .
+    -- reduce in %MULTISET(E <= NAT) : (emp emp):MSet
+    -- (emp):MSet
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+close
+
+-- ------------------------------
+-- state representation with multisets
+-- ------------------------------
+
+mod! OCOMP principal-sort OComp {
+    pr(TID)
+    pr(LOC)
+    [OComp]
+    op (pc[_]:_) : Tid Loc -> OComp {constr} .
+    op (locked:_) : Bool -> OComp {constr} .
+}
+
+mod! STATE {
+    pr(MULTISET(OCOMP) * {
+        sort MSet -> OComps
+        }
+    )
+    [State]
+    op {_} : OComps -> State {constr} .
+}
+
+mod! FMUTEX { pr(STATE)
+    vars T T1 T2 : Tid . var B : Bool .
+    var OCs : OComps .
+    
+    trans [want] : {(locked: false) (pc[T]: rs) OCs} => {(locked: false) (pc[T]: ms) OCs} .
+    trans [try] : {(locked: B) (pc[T]: ms) OCs} => {(locked: true) (pc[T]: cs) OCs} .
+    trans [exit] : {(locked: B) (pc[T]: cs) OCs} => {(locked: false) (pc[T]: rs) OCs} .
+}
+
+open FMUTEX .
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs)} =(1,*)=>* {
+        (pc[T1]: cs) (pc[T2]: cs) OCs
+    } .
+    -- reduce in %FMUTEX : (({ ((locked: false) ((pc [ t1 ] : rs) (pc [ t2 ] : rs))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** Found [state 0-8] ({ ((pc [ t1 ] : cs) ((pc [ t2 ] : cs) (locked: true))) }):State
+    -- target: ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })
+    -- { T2 |-> t2, T1 |-> t1, OCs |-> (locked: true), T |-> t1, B |-> true, OCs |-> (pc [ t2 ] : cs) }
+    -- { T2 |-> t1, T1 |-> t2, OCs |-> (locked: true), T |-> t1, B |-> true, OCs |-> (pc [ t2 ] : cs) }
+    -- found required number of solutions 1.
+    -- (true):Bool
+    -- (0.0002 sec for parse, 0.0009 sec for 15 rewrites + 61 matches, 6 memo hits)
+
+    show path 0-8 .
+    -- [state 0-0] ({ ((pc [ t1 ] : rs) ((pc [ t2 ] : rs) (locked: false))) }):State
+    --   trans [want]: ({ ((locked: false) ((pc [ T ] : rs) OCs)) }) => ({ ((locked: false) ((pc [ T ] : ms) OCs)) })
+    -- [state 0-1] ({ ((pc [ t1 ] : ms) ((pc [ t2 ] : rs) (locked: false))) }):State
+    --   trans [want]: ({ ((locked: false) ((pc [ T ] : rs) OCs)) }) => ({ ((locked: false) ((pc [ T ] : ms) OCs)) })
+    -- [state 0-3] ({ ((pc [ t2 ] : ms) ((pc [ t1 ] : ms) (locked: false))) }):State
+    --   trans [try]: ({ ((locked: B) ((pc [ T ] : ms) OCs)) }) => ({ ((locked: true) ((pc [ T ] : cs) OCs)) })
+    -- [state 0-6] ({ ((pc [ t2 ] : cs) ((pc [ t1 ] : ms) (locked: true))) }):State
+    --   trans [try]: ({ ((locked: B) ((pc [ T ] : ms) OCs)) }) => ({ ((locked: true) ((pc [ T ] : cs) OCs)) })
+    -- [state 0-8] ({ ((pc [ t1 ] : cs) ((pc [ t2 ] : cs) (locked: true))) }):State
+    -- { T2 |-> t2, T1 |-> t1, OCs |-> (locked: true), T |-> t1, B |-> true, OCs |-> (pc [ t2 ] : cs) }
+    -- { T2 |-> t1, T1 |-> t2, OCs |-> (locked: true), T |-> t1, B |-> true, OCs |-> (pc [ t2 ] : cs) }
+close
+
+-- ------------------------------
+-- corrected version of the FMUTEX module
+-- ------------------------------
+
+-- Loop: “Remainder Section”
+--     rs: while test&set(locked) = true {}
+--         “Critical Section”
+--     cs: locked := false;
+--
+-- test&set(x) does the following atomically:
+-- tmp := x;
+-- x := true;
+-- return tmp;
+
+mod! STATE3 {
+    pr(LOC)
+    [State3]
+    op (locked:_,pc1:_,pc2:_,pc3:_) : Bool Loc Loc Loc -> State3 {constr} .
+}
+
+mod! MUTEX3 {
+    pr(STATE3)
+    pr(TID)
+    vars L1 L2 L3 : Loc .
+    var B : Bool .
+    -- t1
+    trans [try1] : (locked: false,pc1: rs,pc2: L2,pc3: L3) => (locked: true,pc1: cs,pc2: L2,pc3: L3) .
+    trans [exit1] : (locked: B,pc1: cs,pc2: L2,pc3: L3) => (locked: false,pc1: rs,pc2: L2,pc3: L3) .
+    -- t2
+    trans [try2] : (locked: false,pc1: L1,pc2: rs,pc3: L3) => (locked: true,pc1: L1,pc2: cs,pc3: L3) .
+    trans [exit2] : (locked: B,pc1: L1,pc2: cs,pc3: L3) => (locked: false,pc1: L1,pc2: rs,pc3: L3) .
+    -- t3
+    trans [try2] : (locked: false,pc1: L1,pc2: L2,pc3: rs) => (locked: true,pc1: L1,pc2: L2,pc3: cs) .
+    trans [exit2] : (locked: B,pc1: L1,pc2: L2,pc3: cs) => (locked: false,pc1: L1,pc2: L2,pc3: rs) .
+}
+
+open MUTEX3 .
+    red (locked: false, pc1: rs, pc2: rs, pc3: rs)
+    =(1,*)=>* (locked: B, pc1: L1, pc2: L2, pc3: L3)
+    suchThat (L1 == cs and L2 == cs) or (L1 == cs and L3 == cs)
+    or (L2 == cs and L3 == cs) .
+    -- reduce in %MUTEX3 : (((locked: false , pc1: rs , pc2: rs , pc3: rs) = ( 1 , * ) =>* (locked: B , pc1: L1 , pc2: L2 , pc3: L3) suchThat ((L1 == cs) and (L2 == cs))) or (((L1 == cs) and (L3 == cs)) or ((L2 == cs) and (L3 == cs)))):Bool
+    ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0003 sec for parse, 0.0004 sec for 27 rewrites + 21 matches, 3 memo hits)
+close
+
+mod! MUTEX {
+    pr(STATE)
+    vars T T1 T2 : Tid .
+    var B : Bool .
+    var OCs : OComps .
+    trans [try] : {(locked: false) (pc[T]: rs) OCs} => {(locked: true) (pc[T]: cs) OCs} .
+    trans [exit] : {(locked: B) (pc[T]: cs) OCs} => {(locked: false) (pc[T]: rs) OCs} . 
+}
+
+open MUTEX .
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs)} =(1,*)=>* {
+        (pc[T1]: cs) (pc[T2]: cs) OCs
+    } .
+    -- reduce in %MUTEX : (({ ((pc [ t3 ] : rs) ((pc [ t2 ] : rs) ((locked: false) (pc [ t1 ] : rs)))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0002 sec for parse, 0.0005 sec for 7 rewrites + 85 matches, 3 memo hits)
+close
+
+-- ------------------------------
+-- FQlock: A Flawed Version of Qlock
+-- ------------------------------
+
+mod! QUEUE(E :: TRIV) {
+    [Elt.E < Queue]
+    op emq : -> Queue {constr} .
+    op _;_ : Queue Queue -> Queue {constr assoc id: emq} .
+}
+
+mod! OCOMP principal-sort OComp {
+    pr(QUEUE(TID))
+    pr(LOC)
+    [OComp]
+    op (pc[_]:_) : Tid Loc -> OComp {constr} .
+    op (tmp[_]:_) : Tid Queue -> OComp {constr} .
+    op (queue:_) : Queue -> OComp {constr} .
+}
+
+mod! STATE {
+    pr(MULTISET(OCOMP) * {
+        sort MSet -> OComps
+        }
+    )
+    [State]
+    op {_} : OComps -> State {constr} .
+}
+
+mod! FQLOCK {
+    pr(STATE)
+    vars T T1 T2 : Tid .
+    vars Q1 Q2 : Queue .
+    var OCs : OComps .
+    trans [want] : {(queue: Q1) (pc[T]: rs) (tmp[T]: Q2) OCs}
+    => {(queue: Q1) (pc[T]: es) (tmp[T]: (Q1 ; T)) OCs} .
+    trans [enq] : {(queue: Q1) (pc[T]: es) (tmp[T]: Q2) OCs}
+    => {(queue: Q2) (pc[T]: ws) (tmp[T]: Q2) OCs} .
+    trans [try] : {(queue: (T ; Q1)) (pc[T]: ws) (tmp[T]: Q2) OCs}
+    => {(queue: (T ; Q1)) (pc[T]: cs) (tmp[T]: Q2) OCs} .
+
+    trans [deq1] : {(queue: (T1 ; Q1)) (pc[T]: cs) (tmp[T]: Q2) OCs}
+    => {(queue: (T ; Q1)) (pc[T]: ds) (tmp[T]: Q1) OCs} .
+    trans [deq2] : {(queue: emq) (pc[T]: cs) (tmp[T]: Q2) OCs}
+    => {(queue: emq) (pc[T]: ds) (tmp[T]: emq) OCs} .
+
+    trans [exit] : {(queue: Q1) (pc[T]: ds) (tmp[T]: Q2) OCs}
+    => {(queue: Q2) (pc[T]: rs) (tmp[T]: Q2) OCs} .
+}
+
+open FQLOCK .
+    red {(queue: emq) (pc[t1]: rs) (pc[t2]: rs) (tmp[t1]: emq) (tmp[t2]: emq)} =(1,*)=>* {
+        (pc[T1]: cs) (pc[T2]: cs) OCs
+    } .
+    -- reduce in %FQLOCK : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((tmp [ t1 ] : emq) ((queue: emq) (tmp [ t2 ] : emq))))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** Found [state 0-33] ({ ((pc [ t1 ] : cs) ((queue: t1) ((pc [ t2 ] : cs) ((tmp [ t2 ] : t2) (tmp [ t1 ] : t1))))) }):State
+    -- target: ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })
+    -- { T2 |-> t2, T1 |-> t1, OCs |-> ((queue: t1) ((tmp [ t2 ] : t2) (tmp [ t1 ] : t1))), Q1 |-> emq, Q2 |-> t1, T |-> t1, OCs |-> ((tmp [ t2 ] : t2) (pc [ t2 ] : cs)) }
+    -- { T2 |-> t1, T1 |-> t2, OCs |-> ((queue: t1) ((tmp [ t2 ] : t2) (tmp [ t1 ] : t1))), Q1 |-> emq, Q2 |-> t1, T |-> t1, OCs |-> ((tmp [ t2 ] : t2) (pc [ t2 ] : cs)) }
+    -- 
+    -- found required number of solutions 1.
+    -- (true):Bool
+    -- (0.0002 sec for parse, 0.0118 sec for 77 rewrites + 2367 matches, 33 memo hits)
+    
+    show path 0-33 .
+    -- [state 0-0] ({ ((tmp [ t1 ] : emq) ((pc [ t1 ] : rs) ((queue: emq) ((tmp [ t2 ] : emq) (pc [ t2 ] : rs))))) }):State
+    --   trans [want]: ({ ((pc [ T ] : rs) ((tmp [ T ] : Q2) ((queue: Q1) OCs))) }) => ({ ((tmp [ T ] : (Q1 ; T)) ((queue: Q1) ((pc [ T ] : es) OCs))) })
+    -- [state 0-1] ({ ((pc [ t1 ] : es) ((queue: emq) ((tmp [ t2 ] : emq) ((pc [ t2 ] : rs) (tmp [ t1 ] : t1))))) }):State
+    --   trans [want]: ({ ((pc [ T ] : rs) ((tmp [ T ] : Q2) ((queue: Q1) OCs))) }) => ({ ((tmp [ T ] : (Q1 ; T)) ((queue: Q1) ((pc [ T ] : es) OCs))) })
+    -- [state 0-3] ({ ((pc [ t2 ] : es) ((queue: emq) ((pc [ t1 ] : es) ((tmp [ t1 ] : t1) (tmp [ t2 ] : t2))))) }):State
+    --   trans [enq]: ({ ((pc [ T ] : es) ((tmp [ T ] : Q2) ((queue: Q1) OCs))) }) => ({ ((tmp [ T ] : Q2) ((queue: Q2) ((pc [ T ] : ws) OCs))) })
+    -- [state 0-6] ({ ((pc [ t2 ] : ws) ((queue: t2) ((pc [ t1 ] : es) ((tmp [ t1 ] : t1) (tmp [ t2 ] : t2))))) }):State
+    --   trans [try]: ({ ((pc [ T ] : ws) ((tmp [ T ] : Q2) ((queue: (T ; Q1)) OCs))) }) => ({ ((tmp [ T ] : Q2) ((queue: (T ; Q1)) ((pc [ T ] : cs) OCs))) })
+    -- [state 0-13] ({ ((pc [ t2 ] : cs) ((queue: t2) ((pc [ t1 ] : es) ((tmp [ t1 ] : t1) (tmp [ t2 ] : t2))))) }):State
+    --   trans [enq]: ({ ((pc [ T ] : es) ((tmp [ T ] : Q2) ((queue: Q1) OCs))) }) => ({ ((tmp [ T ] : Q2) ((queue: Q2) ((pc [ T ] : ws) OCs))) })
+    -- [state 0-23] ({ ((pc [ t1 ] : ws) ((queue: t1) ((pc [ t2 ] : cs) ((tmp [ t2 ] : t2) (tmp [ t1 ] : t1))))) }):State
+    --   trans [try]: ({ ((pc [ T ] : ws) ((tmp [ T ] : Q2) ((queue: (T ; Q1)) OCs))) }) => ({ ((tmp [ T ] : Q2) ((queue: (T ; Q1)) ((pc [ T ] : cs) OCs))) })
+    -- [state 0-33] ({ ((pc [ t1 ] : cs) ((queue: t1) ((pc [ t2 ] : cs) ((tmp [ t2 ] : t2) (tmp [ t1 ] : t1))))) }):State
+    --     { T2 |-> t2, T1 |-> t1, OCs |-> ((queue: t1) ((tmp [ t2 ] : t2) (tmp [ t1 ] : t1))), Q1 |-> emq, Q2 |-> t1, T |-> t1, OCs |-> ((tmp [ t2 ] : t2) (pc [ t2 ] : cs)) }
+    --     { T2 |-> t1, T1 |-> t2, OCs |-> ((queue: t1) ((tmp [ t2 ] : t2) (tmp [ t1 ] : t1))), Q1 |-> emq, Q2 |-> t1, T |-> t1, OCs |-> ((tmp [ t2 ] : t2) (pc [ t2 ] : cs)) }
+
+close
+
+-- ------------------------------
+-- Qlock: A Corrected Version of FQlock
+-- ------------------------------
+
+mod! QLOCK {
+    pr(STATE)
+    vars T T1 T2 : Tid .
+    vars Q1 Q2 : Queue .
+    var OCs : OComps .
+    trans [want] : {(queue: Q1) (pc[T]: rs) OCs}
+    => {(queue: (Q1 ; T)) (pc[T]: ws) OCs} .
+    trans [try] : {(queue: (T ; Q1)) (pc[T]: ws) OCs}
+    => {(queue: (T ; Q1)) (pc[T]: cs) OCs} .
+
+    trans [exit1] : {(queue: (T1 ; Q1)) (pc[T]: cs) OCs}
+    => {(queue: Q1) (pc[T]: rs) OCs} .
+    trans [exit2] : {(queue: emq) (pc[T]: cs) OCs}
+    => {(queue: emq) (pc[T]: rs) OCs} .
+}
+
+open QLOCK .
+    red {(queue: emq) (pc[t1]: rs) (pc[t2]: rs)} =(1,*)=>* {(pc[T1]: cs) (pc[T2]: cs) OCs} .
+    -- reduce in %QLOCK : (({ ((queue: emq) ((pc [ t1 ] : rs) (pc [ t2 ] : rs))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0003 sec for parse, 0.0016 sec for 19 rewrites + 125 matches, 10 memo hits)
+close
+
+open QLOCK .
+    red {(queue: emq) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs)} =(1,*)=>* {(pc[T1]: cs) (pc[T2]: cs) OCs} .
+    -- reduce in %QLOCK : (({ ((pc [ t3 ] : rs) ((pc [ t2 ] : rs) ((queue: emq) (pc [ t1 ] : rs)))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0002 sec for parse, 0.0071 sec for 64 rewrites + 1729 matches, 33 memo hits)
+close
+
+open QLOCK .
+    red {(queue: emq) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs) (pc[t4]: rs)} =(1,*)=>* {(pc[T1]: cs) (pc[T2]: cs) OCs} .
+    -- reduce in %QLOCK : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((pc [ t3 ] : rs) ((queue: emq) (pc [ t4 ] : rs))))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0002 sec for parse, 0.0379 sec for 261 rewrites + 14383 matches, 132 memo hits)
+close

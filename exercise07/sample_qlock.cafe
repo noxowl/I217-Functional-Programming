@@ -1,0 +1,39 @@
+mod! QLOCK {
+    pr(STATE)
+    vars T T1 T2 : Tid .
+    vars Q1 Q2 : Queue .
+    var OCs : OComps .
+    trans [want] : {(queue: Q1) (pc[T]: rs) OCs}
+    => {(queue: (Q1 ; T)) (pc[T]: ws) OCs} .
+    trans [try] : {(queue: (T ; Q1)) (pc[T]: ws) OCs}
+    => {(queue: (T ; Q1)) (pc[T]: cs) OCs} .
+
+    trans [exit1] : {(queue: (T1 ; Q1)) (pc[T]: cs) OCs}
+    => {(queue: Q1) (pc[T]: rs) OCs} .
+    trans [exit2] : {(queue: emq) (pc[T]: cs) OCs}
+    => {(queue: emq) (pc[T]: rs) OCs} .
+}
+
+open QLOCK .
+    red {(queue: emq) (pc[t1]: rs) (pc[t2]: rs)} =(1,*)=>* {(pc[T1]: cs) (pc[T2]: cs) OCs} .
+    -- reduce in %QLOCK : (({ ((queue: emq) ((pc [ t1 ] : rs) (pc [ t2 ] : rs))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0003 sec for parse, 0.0016 sec for 19 rewrites + 125 matches, 10 memo hits)
+close
+
+open QLOCK .
+    red {(queue: emq) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs)} =(1,*)=>* {(pc[T1]: cs) (pc[T2]: cs) OCs} .
+    -- reduce in %QLOCK : (({ ((pc [ t3 ] : rs) ((pc [ t2 ] : rs) ((queue: emq) (pc [ t1 ] : rs)))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0002 sec for parse, 0.0071 sec for 64 rewrites + 1729 matches, 33 memo hits)
+close
+
+open QLOCK .
+    red {(queue: emq) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs) (pc[t4]: rs)} =(1,*)=>* {(pc[T1]: cs) (pc[T2]: cs) OCs} .
+    -- reduce in %QLOCK : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((pc [ t3 ] : rs) ((queue: emq) (pc [ t4 ] : rs))))) }) = ( 1 , * ) =>* ({ ((pc [ T1 ] : cs) ((pc [ T2 ] : cs) OCs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0002 sec for parse, 0.0379 sec for 261 rewrites + 14383 matches, 132 memo hits)
+close
