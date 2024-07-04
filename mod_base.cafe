@@ -1,0 +1,24 @@
+mod! NAT-ERR { 
+    pr(NAT)
+    [Nat ErrNat < Nat&Err]
+    op errNat : -> ErrNat {constr} .
+    op p_ : Zero -> ErrNat .
+    op p_ : ErrNat -> ErrNat .
+    op p_ : Nat&Err -> Nat&Err .
+    op _quo_ : Nat&Err Zero -> ErrNat .
+    op _quo_ : Nat&Err ErrNat -> ErrNat .
+    op _quo_ : ErrNat Nat&Err -> ErrNat .
+    op _quo_ : Nat&Err Nat&Err -> Nat&Err .
+    
+    var NE : Nat&Err .
+    eq p 0 = errNat .
+    eq p errNat = errNat .
+    eq NE quo 0 = errNat .
+    eq NE quo errNat = errNat .
+    eq errNat quo NE = errNat .
+}
+
+mod* TRIV-ERR { 
+    [Elt Err < Elt&Err]
+    op err : -> Err .
+}
