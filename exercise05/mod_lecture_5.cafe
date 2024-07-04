@@ -1,11 +1,8 @@
+in ../mod_base.cafe
+
 mod! PAIR(FE :: TRIV, SE :: TRIV) { 
     [Pair]
     op (_,_) : Elt.FE Elt.SE -> Pair {constr} .
-}
-
-mod! TRIPLE(FE :: TRIV, SE :: TRIV, TE :: TRIV) {
-    [Triple]
-    op (_,_,_) : Elt.FE Elt.SE Elt.TE -> Triple {constr} .
 }
 
 mod* TRIV-ERR-IF {
@@ -177,7 +174,7 @@ view TRIV-ERR-IF2STRING-ERR from TRIV-ERR-IF to STRING-ERR {
 
 open TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) .
     op t : -> Table .
-    eq t = update(update(singleton('java,"Java"),'obj,"OBJ3"),'c,"C").
+    eq t = update(update(singleton('java,"Java"),'obj,"OBJ3"),'c,"C") .
 
     red t .
     -- reduce in %TABLE(K <= TRIV2QID, V <= TRIV-ERR-IF2STRING-ERR) : (t):Table
@@ -352,6 +349,11 @@ open CART .
     -- (('o , 10) | (('t , 10) | empCart)):Cart
     -- (0.0000 sec for parse, 0.0001 sec for 14 rewrites + 20 matches)
 close
+
+mod! TRIPLE(FE :: TRIV, SE :: TRIV, TE :: TRIV) {
+    [Triple]
+    op (_,_,_) : Elt.FE Elt.SE Elt.TE -> Triple {constr} .
+}
 
 mod! BILL-ITEM {
     pr(TRIPLE(STRING-ERR,NAT-ERR,NAT-ERR) * {

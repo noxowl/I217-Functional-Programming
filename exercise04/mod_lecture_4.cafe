@@ -1,3 +1,5 @@
+in ../mod_base.cafe
+
 mod! GLIST1(E :: TRIV) {
     [Nil NnList < List]
     op nil : -> Nil {constr} .
@@ -263,6 +265,21 @@ open GQSORT(E <= TRIV-ERR-ORD2NAT-ERR) .
     -- reduce in %GQSORT(E <= TRIV-ERR-ORD2NAT-ERR) : (qsort((4 | (7 | (5 | (1 | (0 | (3 | (6 | (2 | nil)))))))))):List
     -- (0 | (1 | (2 | (3 | (4 | (5 | (6 | (7 | nil)))))))):List
     -- (0.0000 sec for parse, 0.0004 sec for 64 rewrites + 105 matches)
+close
+
+view TRIV-ERR-ORD2NAT-ERR-REV from TRIV-ERR-ORD to NAT-ERR {
+    sort Elt -> Nat,
+    sort Err -> ErrNat,
+    sort Elt&Err -> Nat&Err,
+    op err -> errNat,
+    op ord -> _>_,
+}
+
+open GQSORT(E <= TRIV-ERR-ORD2NAT-ERR-REV) .
+    red qsort(4 | 7 | 5 | 1 | 0 | 3 | 6 | 2 | nil) .
+    -- reduce in %GQSORT(E <= TRIV-ERR-ORD2NAT-ERR-REV) : (qsort((4 | (7 | (5 | (1 | (0 | (3 | (6 | (2 | nil)))))))))):List
+    -- (7 | (6 | (5 | (4 | (3 | (2 | (1 | (0 | nil)))))))):List
+    -- (0.0001 sec for parse, 0.0007 sec for 61 rewrites + 99 matches)
 close
 
 
