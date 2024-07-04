@@ -1,0 +1,85 @@
+mod! NAT-TRIPLE-IMLM {
+    pr(NAT)
+    [NatTriple]
+    op (_,_,_) : Nat Nat Nat -> NatTriple {constr} .
+    op 1st : NatTriple -> Nat {strat: (1 0)} .
+    -- local strategy for 1st. evaluate the first argument first
+
+    vars FE SE TE : Nat .
+
+    eq 1st((FE,SE,TE)) = FE .
+}
+
+set trace whole on
+open NAT-TRIPLE-IMLM .
+    red 1st((1 + 1,2 + 2,3 + 3)) .
+    -- reduce in %NAT-TRIPLE-IMLM : (1st(((1 + 1) , (2 + 2) , (3 + 3)))):Nat
+    -- [1]: (1st(((1 + 1) , (2 + 2) , (3 + 3)))):Nat
+    --  ---> (1st((2 , (2 + 2) , (3 + 3)))):Nat
+    -- [2]: (1st((2 , (2 + 2) , (3 + 3)))):Nat
+    -- ---> (1st((2 , 4 , (3 + 3)))):Nat
+    -- [3]: (1st((2 , 4 , (3 + 3)))):Nat
+    -- ---> (1st((2 , 4 , 6))):Nat
+    -- [4]: (1st((2 , 4 , 6))):Nat
+    -- ---> (2):NzNat
+    -- (2):NzNat
+    -- (0.0000 sec for parse, 0.0001 sec for 4 rewrites + 4 matches)
+close
+set trace whole off
+
+mod! NAT-TRIPLE-OMLM {
+    pr(NAT)
+    [NatTriple]
+    op (_,_,_) : Nat Nat Nat -> NatTriple {constr} .
+    op 1st : NatTriple -> Nat {strat: (0 1 0)} .
+    -- local strategy for 1st. pseudo method for OMLM. evaluate the first argument last
+
+    vars FE SE TE : Nat .
+    
+    eq 1st((FE,SE,TE)) = FE .
+}
+
+set trace whole on
+open NAT-TRIPLE-OMLM .
+    red 1st((1 + 1,2 + 2,3 + 3)) .
+    -- reduce in %NAT-TRIPLE-OMLM : (1st(((1 + 1) , (2 + 2) , (3 + 3)))):Nat
+    -- [1]: (1st(((1 + 1) , (2 + 2) , (3 + 3)))):Nat
+    -- ---> (1 + 1):NzNat
+    -- [2]: (1 + 1):NzNat
+    -- ---> (2):NzNat
+    -- (2):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 2 rewrites + 2 matches)
+close
+set trace whole off
+
+-- This example is present the E-Strategy by CafeOBJ System.
+mod! NAT-IF {
+    pr(NAT)
+    op if_then{_}else{_} : Bool Nat Nat -> Nat .
+
+    vars N1 N2 : Nat .
+    
+    eq if true then {N1} else {N2} = N1 .
+    eq if false then {N1} else {N2} = N2 .
+}
+
+-- The CafeOBJ system gives (1 0 2 3) to if_then{_}else{_} as the local strategy.
+show NAT-IF .
+-- defining module! NAT-IF done.
+-- module! NAT-IF
+-- {
+--   imports {
+--     protecting (NAT)
+--   }
+--   signature {
+--     op if _ then { _ } else { _ } : Bool Nat Nat -> Nat { strat: (1 0 2 3) prec: 0 }
+--   }
+--   axioms {
+--     var N1 : Nat
+--     var N2 : Nat
+--     eq (if true then { N1 } else { N2 })
+--         = N1 .
+--     eq (if false then { N1 } else { N2 })
+--         = N2 .
+--   }
+-- }

@@ -1,0 +1,360 @@
+mod! GLIST(E :: TRIV) {
+    [Nil NnList < List]
+    op nil : -> Nil {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+    -- This operators are example for the finite list.
+    -- Because the evaluation of the finite list is assume the nil is the end of the list. and nil(empty) list is exist.
+}
+
+mod! INF-LIST(E :: TRIV) {
+    pr(NAT)
+    pr(GLIST(E))
+    [InfList]
+    op _|_ : Elt.E InfList -> InfList {strat: (1 0)} .
+    op take : InfList Nat -> List .
+    op drop : InfList Nat -> InfList .
+    op _@_ : List InfList -> InfList .
+    op zip : InfList InfList -> InfList .
+    op if_then{_}else{_} : Bool InfList InfList -> InfList .
+    
+    vars X Y : Elt.E .
+    vars IL IL1 IL2 : InfList .
+    var NzN : NzNat .
+    var N : Nat .
+    var L : List .
+
+    eq take(IL,0) = nil .
+    eq take(X | IL, NzN) = X | take(IL,p NzN) .
+    eq drop(IL,0) = IL .
+    eq drop(X | IL, NzN) = drop(IL,p NzN) .
+    eq nil @ IL = IL .
+    eq (X | L) @ IL = X | (L @ IL) .
+    eq zip(X | IL,Y | IL2) = X | Y | zip(IL,IL2) .
+    eq if true then {IL1} else {IL2} = IL1 .
+    eq if false then {IL1} else {IL2} = IL2 .
+}
+
+mod! NAT-INF-LIST {
+    pr(INF-LIST(NAT)) .
+    op mkNILFrom : Nat -> InfList .
+    
+    var N : Nat .
+    
+    eq mkNILFrom(N) = N | mkNILFrom(N + 1) .
+}
+
+open NAT-INF-LIST .
+    red mkNILFrom(0) .
+    -- opening module NAT-INF-LIST done.
+    -- reduce in %NAT-INF-LIST : (mkNILFrom(0)):InfList
+    -- (0 | mkNILFrom(1)):InfList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
+    red take(mkNILFrom(0),10) .
+    -- reduce in %NAT-INF-LIST : (take(mkNILFrom(0),10)):List
+    -- (0 | (1 | (2 | (3 | (4 | (5 | (6 | (7 | (8 | (9 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 41 rewrites + 51 matches)
+
+    red drop(mkNILFrom(0),10) .
+    -- reduce in %NAT-INF-LIST : (drop(mkNILFrom(0),10)):InfList
+    -- (10 | mkNILFrom((1 + 10))):InfList
+    -- (0.0000 sec for parse, 0.0001 sec for 41 rewrites + 51 matches)
+
+    red take(drop(mkNILFrom(0),997),10) .
+    -- reduce in %NAT-INF-LIST : (take(drop(mkNILFrom(0),997),10)):List
+    -- (997 | (998 | (999 | (1000 | (1001 | (1002 | (1003 | (1004 | (1005 | (1006 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0065 sec for 4030 rewrites + 5037 matches)
+
+    red take(take(mkNILFrom(0),10) @ drop(mkNILFrom(0),10),20) .
+    -- reduce in %NAT-INF-LIST : (take((take(mkNILFrom(0),10) @ drop(mkNILFrom(0),10)),20)):List
+    -- (0 | (1 | (2 | (3 | (4 | (5 | (6 | (7 | (8 | (9 | (10 | (11 | (12 | (13 | (14 | (15 | (16 | (17 | (18 | (19 | nil)))))))))))))))))))):List
+    -- (0.0000 sec for parse, 0.0004 sec for 154 rewrites + 204 matches)
+
+    red take(mkNILFrom(0),20) .
+    -- reduce in %NAT-INF-LIST : (take(mkNILFrom(0),20)):List
+    -- (0 | (1 | (2 | (3 | (4 | (5 | (6 | (7 | (8 | (9 | (10 | (11 | (12 | (13 | (14 | (15 | (16 | (17 | (18 | (19 | nil)))))))))))))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 81 rewrites + 101 matches)
+
+    red zip(mkNILFrom(0),mkNILFrom(0)) .
+    -- reduce in %NAT-INF-LIST : (zip(mkNILFrom(0),mkNILFrom(0))):InfList
+    -- (0 | (0 | zip(mkNILFrom(1),mkNILFrom(1)))):InfList
+    -- (0.0000 sec for parse, 0.0000 sec for 3 rewrites + 3 matches)
+
+    red take(drop(zip(mkNILFrom(0),mkNILFrom(0)),997),10) .
+    -- reduce in %NAT-INF-LIST : (take(drop(zip(mkNILFrom(0),mkNILFrom(0)),997),10)):List
+    -- (498 | (499 | (499 | (500 | (500 | (501 | (501 | (502 | (502 | (503 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0083 sec for 4532 rewrites + 5539 matches)
+close
+
+mod! ERATOSTHENES-SIEVE {
+    pr(NAT-INF-LIST)
+    op primes : -> InfList .
+    op sieve : InfList -> InfList .
+    op check : Nat InfList -> InfList .
+    --
+    vars X Y : Nat .
+    var NzX : NzNat .
+    var IL : InfList .
+
+    -- primes
+    eq primes = sieve(mkNILFrom(2)) .
+    -- sieve
+    eq sieve(X | IL) = X | sieve(check(X,IL)) .
+    -- check
+    eq check(0,IL) = IL . eq check(NzX,Y | IL) = if NzX divides Y then {check(NzX,IL)} else {Y | check(NzX,IL)} .
+}
+
+open ERATOSTHENES-SIEVE .
+    red primes .
+    -- reduce in %ERATOSTHENES-SIEVE : (primes):InfList
+    -- (2 | sieve(check(2,mkNILFrom((1 + 2))))):InfList
+    -- (0.0000 sec for parse, 0.0000 sec for 3 rewrites + 3 matches)
+
+    red take(primes,10) .
+    -- reduce in %ERATOSTHENES-SIEVE : (take(primes,10)):List
+    -- (2 | (3 | (5 | (7 | (11 | (13 | (17 | (19 | (23 | (29 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0009 sec for 332 rewrites + 483 matches)
+
+    red take(primes,20) .
+    -- reduce in %ERATOSTHENES-SIEVE : (take(primes,20)):List
+    -- (2 | (3 | (5 | (7 | (11 | (13 | (17 | (19 | (23 | (29 | (31 | (37 | (41 | (43 | (47 | (53 | (59 | (61 | (67 | (71 | nil)))))))))))))))))))):List
+    -- (0.0000 sec for parse, 0.0042 sec for 1055 rewrites + 1590 matches)
+
+    red take(primes,50) .
+    -- reduce in %ERATOSTHENES-SIEVE : (take(primes,50)):List
+    -- (2 | (3 | (5 | (7 | (11 | (13 | (17 | (19 | (23 | (29 | (31 | (37 | (41 | (43 | (47 | (53 | (59 | (61 | (67 | (71 | (73 | (79 | (83 | (89 | (97 | (101 | (103 | (107 | (109 | (113 | (127 | (131 | (137 | (139 | (149 | (151 | (157 | (163 | (167 | (173 | (179 | (181 | (191 | (193 | (197 | (199 | (211 | (223 | (227 | (229 | nil)))))))))))))))))))))))))))))))))))))))))))))))))):List
+    -- (0.0000 sec for parse, 0.0330 sec for 5332 rewrites + 8345 matches)
+
+    red take(primes,100) .
+    -- reduce in %ERATOSTHENES-SIEVE : (take(primes,100)):List
+    -- (2 | (3 | (5 | (7 | (11 | (13 | (17 | (19 | (23 | (29 | (31 | (37 | (41 | (43 | (47 | (53 | (59 | (61 | (67 | (71 | (73 | (79 | (83 | (89 | (97 | (101 | (103 | (107 | (109 | (113 | (127 | (131 | (137 | (139 | (149 | (151 | (157 | (163 | (167 | (173 | (179 | (181 | (191 | (193 | (197 | (199 | (211 | (223 | (227 | (229 | (233 | (239 | (241 | (251 | (257 | (263 | (269 | (271 | (277 | (281 | (283 | (293 | (307 | (311 | (313 | (317 | (331 | (337 | (347 | (349 | (353 | (359 | (367 | (373 | (379 | (383 | (389 | (397 | (401 | (409 | (419 | (421 | (431 | (433 | (439 | (443 | (449 | (457 | (461 | (463 | (467 | (479 | (487 | (491 | (499 | (503 | (509 | (521 | (523 | (541 | nil)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))):List
+    -- (0.0000 sec for parse, 0.1920 sec for 18953 rewrites + 30314 matches)
+close
+
+mod! HAMMING {
+    pr(NAT-INF-LIST)
+    op ham : -> InfList .
+    op 2* : InfList -> InfList .
+    op 3* : InfList -> InfList .
+    op 5* : InfList -> InfList .
+    op merge : InfList InfList -> InfList .
+    
+    vars X Y : Nat .
+    vars IL IL2 : InfList .
+    -- ham
+    eq ham = 1 | merge(merge(2*(ham),3*(ham)),5*(ham)) .
+    -- 2*
+    eq 2*(X | IL) = 2 * X | 2*(IL) . 
+    -- 3*
+    eq 3*(X | IL) = 3 * X | 3*(IL) .
+    -- 5*
+    eq 5*(X | IL) = 5 * X | 5*(IL) .
+    -- merge
+    eq merge(X | IL,Y | IL2) = if X < Y then {X | merge(IL,Y | IL2)} else {if Y < X then {Y | merge(X | IL,IL2)} else {X | merge(IL,IL2)} } .
+}
+
+open HAMMING .
+    red ham .
+    -- reduce in %HAMMING : (ham):InfList
+    -- (1 | merge(merge(2*(ham),3*(ham)),5*(ham))):InfList
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+
+    red take(ham,10) .
+    -- reduce in %HAMMING : (take(ham,10)):List
+    -- (1 | (2 | (3 | (4 | (5 | (6 | (8 | (9 | (10 | (12 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0018 sec for 404 rewrites + 438 matches)
+    
+    red take(ham,20) .
+    -- reduce in %HAMMING : (take(ham,20)):List
+    -- (1 | (2 | (3 | (4 | (5 | (6 | (8 | (9 | (10 | (12 | (15 | (16 | (18 | (20 | (24 | (25 | (27 | (30 | (32 | (36 | nil)))))))))))))))))))):List
+    -- (0.0000 sec for parse, 0.0101 sec for 1370 rewrites + 1484 matches)
+
+    red take(ham,50) .
+    -- reduce in %HAMMING : (take(ham,50)):List
+    -- (1 | (2 | (3 | (4 | (5 | (6 | (8 | (9 | (10 | (12 | (15 | (16 | (18 | (20 | (24 | (25 | (27 | (30 | (32 | (36 | (40 | (45 | (48 | (50 | (54 | (60 | (64 | (72 | (75 | (80 | (81 | (90 | (96 | (100 | (108 | (120 | (125 | (128 | (135 | (144 | (150 | (160 | (162 | (180 | (192 | (200 | (216 | (225 | (240 | (243 | nil)))))))))))))))))))))))))))))))))))))))))))))))))):List
+    -- (0.0000 sec for parse, 0.1834 sec for 10826 rewrites + 11788 matches)
+
+    red take(ham,100) .
+    -- reduce in %HAMMING : (take(ham,100)):List
+    -- (1 | (2 | (3 | (4 | (5 | (6 | (8 | (9 | (10 | (12 | (15 | (16 | (18 | (20 | (24 | (25 | (27 | (30 | (32 | (36 | (40 | (45 | (48 | (50 | (54 | (60 | (64 | (72 | (75 | (80 | (81 | (90 | (96 | (100 | (108 | (120 | (125 | (128 | (135 | (144 | (150 | (160 | (162 | (180 | (192 | (200 | (216 | (225 | (240 | (243 | (250 | (256 | (270 | (288 | (300 | (320 | (324 | (360 | (375 | (384 | (400 | (405 | (432 | (450 | (480 | (486 | (500 | (512 | (540 | (576 | (600 | (625 | (640 | (648 | (675 | (720 | (729 | (750 | (768 | (800 | (810 | (864 | (900 | (960 | (972 | (1000 | (1024 | (1080 | (1125 | (1152 | (1200 | (1215 | (1250 | (1280 | (1296 | (1350 | (1440 | (1458 | (1500 | (1536 | nil)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))):List
+    -- (0.0000 sec for parse, 3.4320 sec for 72940 rewrites + 79462 matches)
+close
+
+-- -----------------------------------------
+-- Simulation of the Mutex Protocol
+-- Let us consider a multi‐threaded program in which multi‐threads are running simultaneously and sharing some resources, such as objects.
+-- Some shared resources must be used mutually exclusively by at most one thread at any given moment.
+-- A mechanism to achieve this is called a mutual exclusion (Mutex) protocol.
+-- Suppose that there are two threads t1 & t2 that share a Boolean variable locked whose initial value is false and execute the following pseudo‐code:
+-- Loop: “Remainder Section”
+--     rs: while locked = true {}
+--     ms: locked := true;
+--         “Critical Section”
+--     cs: locked := false;
+-- Each thread t is at rs, ms or cs. When t is at rs, it can check if locked is false. If so, it moves to ms and sets locked true, entering “Critical Section” and doing something that requires some shared resources. Otherwise, it stays at rs. When t is at cs, it sets locked false, going back to “Remainder Section”.
+-- Each state of the protocol is characterized by three values: locked, the location of t1 and the location of t2. Therefore, a state of the protocol is expressed as the following record:
+-- (locked: b, pc1: l1, pc2: l2)
+
+mod! LOC {
+    [Loc]
+    ops rs ms cs : -> Loc {constr} .
+}
+
+mod! STATE principal-sort State {
+    pr(LOC)
+    [State]
+    op (locked:_,pc1:_,pc2:_) : Bool Loc Loc -> State {constr} .
+}
+
+mod! TID {
+    [Tid]
+    ops t1 t2 : -> Tid {constr} .
+    op if_then{_}else{_} : Bool Tid Tid -> Tid .
+    
+    vars T1 T2 : Tid .
+
+    eq if true then {T1} else {T2} = T1 .
+    eq if false then {T1} else {T2} = T2 .
+}
+
+mod! FMUTEX {
+    pr(STATE)
+    pr(TID)
+    
+    op trans : State Tid -> State .
+    vars L1 L2 : Loc .
+    var B : Bool .
+    
+    -- t1
+    eq trans((locked: true,pc1: rs,pc2: L2), t1) = (locked: true,pc1: rs,pc2: L2) .
+    eq trans((locked: false,pc1: rs,pc2: L2), t1) = (locked: false,pc1: ms,pc2: L2) .
+    eq trans((locked: B,pc1: ms,pc2: L2), t1) = (locked: true,pc1: cs,pc2: L2) .
+    eq trans((locked: B,pc1: cs,pc2: L2), t1) = (locked: false,pc1: rs,pc2: L2) .
+    -- t2
+    eq trans((locked: true,pc1: L1,pc2: rs), t2) = (locked: true,pc1: L1,pc2: rs) .
+    eq trans((locked: false,pc1: L1,pc2: rs), t2) = (locked: false,pc1: L1,pc2: ms) .
+    eq trans((locked: B,pc1: L1,pc2: ms), t2) = (locked: true,pc1: L1,pc2: cs) .
+    eq trans((locked: B,pc1: L1,pc2: cs), t2) = (locked: false,pc1: L1,pc2: rs) .
+}
+
+mod! COMP {
+    pr(INF-LIST(STATE)
+        * { sort InfList -> Comp, sort List -> FComp } )
+}
+
+
+mod! SCHED {
+    pr(NAT)
+    pr(INF-LIST(TID)
+        * {sort InfList -> Sched} )
+
+    op sched : Nat -> Sched .
+    var N : Nat .
+    eq sched(N) = if 2 divides N then {t1 | sched(N quo 2)} else {t2 | sched(N quo 2)} .
+}
+
+open SCHED .
+    red take(sched(123),10) .
+    -- reduce in %SCHED : (take(sched(123),10)):List
+    -- (t2 | (t2 | (t1 | (t2 | (t2 | (t2 | (t2 | (t1 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 64 rewrites + 80 matches)
+
+
+    red take(sched(1234),10) .
+    -- reduce in %SCHED : (take(sched(1234),10)):List
+    -- (t1 | (t2 | (t1 | (t1 | (t2 | (t1 | (t2 | (t2 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 64 rewrites + 79 matches)
+
+    red take(sched(12345),10) .
+    -- reduce in %SCHED : (take(sched(12345),10)):List
+    -- (t2 | (t1 | (t1 | (t2 | (t2 | (t2 | (t1 | (t1 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0000 sec for 64 rewrites + 78 matches)
+close
+
+mod! SIM {
+    pr(FMUTEX)
+    pr(COMP)
+    pr(SCHED)
+    
+    op sim : State Nat -> Comp .
+    op sub-sim : State Sched -> Comp .
+    var S : State .
+    var N : Nat .
+    var NzD : NzNat .
+    var T : Tid .
+    var TIL : Sched .
+    
+    eq sim(S,N) = sub-sim(S,sched(N)) .
+    eq sub-sim(S,T | TIL) = S | sub-sim(trans(S,T),TIL) .
+}
+
+open SIM .
+    red take(sim((locked: false, pc1: rs, pc2: rs),123), 10) .
+    -- reduce in %SIM : (take(sim((locked: false , pc1: rs , pc2: rs),123),10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: ms , pc2: rs) | ((locked: true , pc1: cs , pc2: rs) | nil)))))))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 86 rewrites + 144 matches)
+
+    red take(sim((locked: false, pc1: rs, pc2: rs),1234), 10) .
+    -- reduce in %SIM : (take(sim((locked: false , pc1: rs , pc2: rs),1234),10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: ms , pc2: rs) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | nil)))))))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 86 rewrites + 133 matches)
+
+    red take(sim((locked: false, pc1: rs, pc2: rs),12345), 10) .
+    -- reduce in %SIM : (take(sim((locked: false , pc1: rs , pc2: rs),12345),10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: true , pc1: cs , pc2: cs) | ((locked: false , pc1: cs , pc2: rs) | ((locked: false , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | nil)))))))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 86 rewrites + 135 matches)
+close
+
+mod! SIM-REVISED {
+    pr(FMUTEX)
+    pr(COMP)
+    pr(SCHED)
+
+    op mutex : State -> Bool .
+    op sim-check : State Nat Nat -> FComp .
+    op sub-sim-check : State Sched Nat -> FComp .
+    op if_then{_}else{_} : Bool FComp FComp -> FComp .
+    vars FC1 FC2 : FComp .
+    vars S : State .
+    vars N D : Nat .
+    var NzD : NzNat .
+    var T : Tid .
+    var TIL : Sched 
+    vars L1 L2 : Loc .
+    var B : Bool .
+
+    eq mutex((locked: B,pc1: L1,pc2: L2)) = not (L1 == cs and L2 == cs) .
+    eq sim-check(S, N, D) = sub-sim-check(S, sched(N), D) .
+    eq sub-sim-check(S,T | TIL, 0) = S | nil .
+    eq sub-sim-check(S,T | TIL, NzD) = if mutex(S) then {S | sub-sim-check(trans(S,T), TIL, p NzD)} else {S | nil} .
+    eq if true then {FC1} else {FC2} = FC1 .
+    eq if true then {FC1} else {FC2} = FC2 .
+}
+
+open SIM-REVISED .
+    red sim-check((locked: false,pc1: rs,pc2: rs), 123, 10) .
+    -- reduce in %SIM-REVISED : (sim-check((locked: false , pc1: rs , pc2: rs),123,10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: ms , pc2: rs) | ((locked: true , pc1: cs , pc2: rs) | ((locked: false , pc1: rs , pc2: rs) | nil))))))))))):FComp
+    -- (0.0000 sec for parse, 0.0002 sec for 145 rewrites + 223 matches)
+
+    red sim-check((locked: false,pc1: rs,pc2: rs), 1234, 10) .
+    -- reduce in %SIM-REVISED : (sim-check((locked: false , pc1: rs , pc2: rs),1234,10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: ms , pc2: rs) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | nil))))))))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 145 rewrites + 212 matches)
+
+    red sim-check((locked: false,pc1: rs,pc2: rs), 12345, 10) .
+    -- reduce in %SIM-REVISED : (sim-check((locked: false , pc1: rs , pc2: rs),12345,10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | (if false then { ((locked: true , pc1: cs , pc2: cs) | ((locked: false , pc1: cs , pc2: rs) | ((locked: false , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | nil))))))) } else { ((locked: true , pc1: cs , pc2: cs) | nil) }))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 144 rewrites + 217 matches)
+close
+
+mod! SIM-REVISED2 {
+    -- Loop: “Remainder Section”
+    --     rs: while test&set(locked) = true {}
+    --         “Critical Section”
+    --     cs: locked := false;
+    -- -- test&set(x) --
+    -- tmp := x;
+    -- x := true;
+    -- return tmp;
+}
