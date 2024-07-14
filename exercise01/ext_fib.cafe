@@ -1,14 +1,15 @@
 open NAT .
     op ext-fib : Nat -> Nat .
-    op prev : Nat -> NzNat .
     op if_then {_} else {_} : Bool Nat Nat -> Nat .
-    vars NzX V N1 N2 : Nat .
+    op ext-fib-sub : Nat -> NzNat .
+    vars X N1 N2 : Nat .
+    vars NzX : NzNat .
 
     eq if true then {N1} else {N2} = N1 .
     eq if false then {N1} else {N2} = N2 .
-    eq prev(V) = p V .
-
-    eq ext-fib(NzX) = if NzX == 0 then {0} else {if NzX == 1 then {1} else {if NzX == 2 then {2} else {ext-fib(prev(NzX)) + ext-fib(prev(prev(NzX))) + ext-fib(prev(prev(prev(NzX))))}}} .
+    
+    eq ext-fib(X) = if (X quo 3 == 0) then {X} else {ext-fib-sub(X)} .
+    eq ext-fib-sub(NzX) = ext-fib(p NzX) + ext-fib(p p NzX) + ext-fib(p p p NzX) .
     --
     red ext-fib(0) .
     -- (0):Zero
@@ -29,4 +30,8 @@ open NAT .
     red ext-fib(5) .
     -- (11):NzNat
     -- (0.0000 sec for parse, 0.0004 sec for 133 rewrites + 156 matches)
+
+    red ext-fib(7) .
+    -- (37):NzNat
+    -- (0.0000 sec for parse, 0.0064 sec for 319 rewrites + 334 matches)
 close
