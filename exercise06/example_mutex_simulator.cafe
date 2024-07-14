@@ -144,11 +144,11 @@ mod! SIM-REVISED {
     var B : Bool .
 
     eq mutex((locked: B,pc1: L1,pc2: L2)) = not (L1 == cs and L2 == cs) .
-    eq sim-check(S, N, D) = sub-sim-check(S, sched(N), D) .
+    eq sim-check(S,N,D) = sub-sim-check(S,sched(N),D) .
     eq sub-sim-check(S,T | TIL, 0) = S | nil .
     eq sub-sim-check(S,T | TIL, NzD) = if mutex(S) then {S | sub-sim-check(trans(S,T), TIL, p NzD)} else {S | nil} .
     eq if true then {FC1} else {FC2} = FC1 .
-    eq if true then {FC1} else {FC2} = FC2 .
+    eq if false then {FC1} else {FC2} = FC2 .
 }
 
 open SIM-REVISED .
@@ -164,6 +164,6 @@ open SIM-REVISED .
 
     red sim-check((locked: false,pc1: rs,pc2: rs), 12345, 10) .
     -- reduce in %SIM-REVISED : (sim-check((locked: false , pc1: rs , pc2: rs),12345,10)):FComp
-    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | (if false then { ((locked: true , pc1: cs , pc2: cs) | ((locked: false , pc1: cs , pc2: rs) | ((locked: false , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | nil))))))) } else { ((locked: true , pc1: cs , pc2: cs) | nil) }))))):FComp
-    -- (0.0000 sec for parse, 0.0001 sec for 144 rewrites + 217 matches)
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: true , pc1: cs , pc2: cs) | nil))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 68 rewrites + 101 matches)
 close
