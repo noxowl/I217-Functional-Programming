@@ -431,13 +431,163 @@ open SIM-REVISED .
     -- (0.0000 sec for parse, 0.0001 sec for 144 rewrites + 217 matches)
 close
 
-mod! SIM-REVISED2 {
-    -- Loop: “Remainder Section”
-    --     rs: while test&set(locked) = true {}
-    --         “Critical Section”
-    --     cs: locked := false;
-    -- -- test&set(x) --
-    -- tmp := x;
-    -- x := true;
-    -- return tmp;
+-- 4 Threads
+
+mod! TID-4TH {
+    [Tid4Th]
+    ops t1 t2 t3 t4 : -> Tid4Th {constr} .
+    op if_then{_}else{_} : Bool Tid4Th Tid4Th -> Tid4Th .
+    
+    vars TID-LHS TID-RHS : Tid4Th .
+
+    eq if true then {TID-LHS} else {TID-RHS} = TID-LHS .
+    eq if false then {TID-LHS} else {TID-RHS} = TID-RHS .
 }
+
+mod! STATE-4TH principal-sort State4Th {
+    pr(LOC)
+    [State4Th]
+    op (locked:_,pc1:_,pc2:_,pc3:_,pc4:_) : Bool Loc Loc Loc Loc -> State4Th {constr} .
+}
+
+mod! FMUTEX-4TH {
+    pr(STATE-4TH)
+    pr(TID-4TH)
+    
+    op trans : State4Th Tid4Th -> State4Th .
+    vars L1 L2 L3 L4 : Loc .
+    var B : Bool .
+    
+    -- t1
+    eq trans((locked: true,pc1: rs,pc2: L2,pc3: L3,pc4: L4), t1) = (locked: true,pc1: rs,pc2: L2,pc3: L3,pc4: L4) .
+    eq trans((locked: false,pc1: rs,pc2: L2,pc3: L3,pc4: L4), t1) = (locked: false,pc1: ms,pc2: L2,pc3: L3,pc4: L4) .
+    eq trans((locked: B,pc1: ms,pc2: L2,pc3: L3,pc4: L4), t1) = (locked: true,pc1: cs,pc2: L2,pc3: L3,pc4: L4) .
+    eq trans((locked: B,pc1: cs,pc2: L2,pc3: L3,pc4: L4), t1) = (locked: false,pc1: rs,pc2: L2,pc3: L3,pc4: L4) .
+    -- t2
+    eq trans((locked: true,pc1: L1,pc2: rs,pc3: L3,pc4: L4), t2) = (locked: true,pc1: L1,pc2: rs,pc3: L3,pc4: L4) .
+    eq trans((locked: false,pc1: L1,pc2: rs,pc3: L3,pc4: L4), t2) = (locked: false,pc1: L1,pc2: ms,pc3: L3,pc4: L4) .
+    eq trans((locked: B,pc1: L1,pc2: ms,pc3: L3,pc4: L4), t2) = (locked: true,pc1: L1,pc2: cs,pc3: L3,pc4: L4) .
+    eq trans((locked: B,pc1: L1,pc2: cs,pc3: L3,pc4: L4), t2) = (locked: false,pc1: L1,pc2: rs,pc3: L3,pc4: L4) .
+    -- t3
+    eq trans((locked: true,pc1: L1,pc2: L2,pc3: rs,pc4: L4), t3) = (locked: true,pc1: L1,pc2: L2,pc3: rs,pc4: L4) .
+    eq trans((locked: false,pc1: L1,pc2: L2,pc3: rs,pc4: L4), t3) = (locked: false,pc1: L1,pc2: L2,pc3: ms,pc4: L4) .
+    eq trans((locked: B,pc1: L1,pc2: L2,pc3: ms,pc4: L4), t3) = (locked: true,pc1: L1,pc2: L2,pc3: cs,pc4: L4) .
+    eq trans((locked: B,pc1: L1,pc2: L2,pc3: cs,pc4: L4), t3) = (locked: false,pc1: L1,pc2: L2,pc3: rs,pc4: L4) .
+    -- t4
+    eq trans((locked: true,pc1: L1,pc2: L2,pc3: L3,pc4: rs), t4) = (locked: true,pc1: L1,pc2: L2,pc3: L3,pc4: rs) .
+    eq trans((locked: false,pc1: L1,pc2: L2,pc3: L3,pc4: rs), t4) = (locked: false,pc1: L1,pc2: L2,pc3: L3,pc4: ms) .
+    eq trans((locked: B,pc1: L1,pc2: L2,pc3: L3,pc4: ms), t4) = (locked: true,pc1: L1,pc2: L2,pc3: L3,pc4: cs) .
+    eq trans((locked: B,pc1: L1,pc2: L2,pc3: L3,pc4: cs), t4) = (locked: false,pc1: L1,pc2: L2,pc3: L3,pc4: rs) .
+}
+
+mod! COMP-4TH {
+    pr(INF-LIST(STATE-4TH) * { sort InfList -> Comp4Th, sort List -> FComp4Th })
+}
+
+mod! SCHED-4TH {
+    pr(INF-LIST(TID-4TH)
+        * {sort InfList -> Sched4Th} )
+
+    op sched4Th : Nat -> Sched4Th .
+    var N : Nat .
+    eq sched4Th(N) = if (N rem 4) == 0 then {t1 | sched4Th(N quo 4)}
+        else {(if ((N rem 4) == 1) then {t2 | sched4Th(N quo 4)}
+            else {(if ((N rem 4) == 2) then {t3 | sched4Th(N quo 4)}
+                else {t4 | sched4Th(N quo 4)}
+            )}
+        )} .
+}
+
+open SCHED-4TH .
+    red take(sched4Th(123),10) .
+    -- reduce in %SCHED-4TH : (take(sched4Th(123),10)):List
+    -- (t4 | (t3 | (t4 | (t2 | (t1 | (t1 | (t1 | (t1 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 96 rewrites + 115 matches)
+
+    red take(sched4Th(1234),10) .
+    -- reduce in %SCHED-4TH : (take(sched4Th(1234),10)):List
+    -- (t3 | (t1 | (t2 | (t4 | (t1 | (t2 | (t1 | (t1 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 93 rewrites + 110 matches)
+
+    red take(sched4Th(12345),10) .
+    -- reduce in %SCHED-4TH : (take(sched4Th(12345),10)):List
+    -- (t2 | (t3 | (t4 | (t1 | (t1 | (t1 | (t4 | (t1 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 96 rewrites + 115 matches)
+close
+
+mod! SIM-4TH {
+    pr(FMUTEX-4TH)
+    pr(COMP-4TH)
+    pr(SCHED-4TH)
+    
+    op sim : State4Th Nat -> Comp4Th .
+    op sub-sim : State4Th Sched4Th -> Comp4Th .
+    var S : State4Th .
+    var N : Nat .
+    var NzD : NzNat .
+    var T : Tid4Th .
+    var TIL : Sched4Th .
+
+    eq sim(S,N) = sub-sim(S,sched4Th(N)) .
+    eq sub-sim(S,T | TIL) = S | sub-sim(trans(S,T),TIL) .
+}
+
+open SIM-4TH .
+    red take(sim((locked: false,pc1: rs,pc2: rs,pc3: rs,pc4: rs),123), 10) .
+    -- reduce in %SIM-4TH : (take(sim((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs),123),10)):FComp4Th
+    -- ((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs) | ((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: ms) | ((locked: false , pc1: rs , pc2: rs , pc3: ms , pc4: ms) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | nil)))))))))):FComp4Th
+    -- (0.0000 sec for parse, 0.0002 sec for 118 rewrites + 177 matches)
+
+    red take(sim((locked: false,pc1: rs,pc2: rs,pc3: rs,pc4: rs),1234), 10) .
+    -- reduce in %SIM-4TH : (take(sim((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs),1234),10)):FComp4Th
+    -- ((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs) | ((locked: false , pc1: rs , pc2: rs , pc3: ms , pc4: rs) | ((locked: false , pc1: ms , pc2: rs , pc3: ms , pc4: rs) | ((locked: false , pc1: ms , pc2: ms , pc3: ms , pc4: rs) | ((locked: false , pc1: ms , pc2: ms , pc3: ms , pc4: ms) | ((locked: true , pc1: cs , pc2: ms , pc3: ms , pc4: ms) | ((locked: true , pc1: cs , pc2: cs , pc3: ms , pc4: ms) | ((locked: false , pc1: rs , pc2: cs , pc3: ms , pc4: ms) | ((locked: false , pc1: ms , pc2: cs , pc3: ms , pc4: ms) | ((locked: true , pc1: cs , pc2: cs , pc3: ms , pc4: ms) | nil)))))))))):FComp4Th
+    -- (0.0000 sec for parse, 0.0002 sec for 115 rewrites + 177 matches)
+
+    red take(sim((locked: false,pc1: rs,pc2: rs,pc3: rs,pc4: rs),12345), 10) .
+    -- reduce in %SIM-4TH : (take(sim((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs),12345),10)):FComp4Th
+    -- ((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs) | ((locked: false , pc1: rs , pc2: ms , pc3: rs , pc4: rs) | ((locked: false , pc1: rs , pc2: ms , pc3: ms , pc4: rs) | ((locked: false , pc1: rs , pc2: ms , pc3: ms , pc4: ms) | ((locked: false , pc1: ms , pc2: ms , pc3: ms , pc4: ms) | ((locked: true , pc1: cs , pc2: ms , pc3: ms , pc4: ms) | ((locked: false , pc1: rs , pc2: ms , pc3: ms , pc4: ms) | ((locked: true , pc1: rs , pc2: ms , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: ms , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: ms , pc3: ms , pc4: cs) | nil)))))))))):FComp4Th
+    -- (0.0000 sec for parse, 0.0002 sec for 118 rewrites + 184 matches)
+close
+
+mod! SIM-REVISED-4TH {
+    pr(FMUTEX-4TH)
+    pr(COMP-4TH)
+    pr(SCHED-4TH)
+
+    op mutex : State4Th -> Bool .
+    op sim-check : State4Th Nat Nat -> FComp4Th .
+    op sub-sim-check : State4Th Sched4Th Nat -> FComp4Th .
+    op if_then{_}else{_} : Bool FComp4Th FComp4Th -> FComp4Th .
+    vars FC1 FC2 : FComp4Th .
+    vars S : State4Th .
+    vars N D : Nat .
+    var NzD : NzNat .
+    var T : Tid4Th .
+    var TIL : Sched4Th .
+    vars L1 L2 L3 L4 : Loc .
+    var B : Bool .
+
+    eq mutex((locked: B,pc1: L1,pc2: L2,pc3: L3,pc4: L4)) = not ((L1 == cs and L2 == cs) and (L3 == cs and L4 == cs)) .
+    eq sim-check(S, N, D) = sub-sim-check(S, sched4Th(N), D) .
+    eq sub-sim-check(S,T | TIL, 0) = S | nil .
+    eq sub-sim-check(S,T | TIL, NzD) = if mutex(S) then {S | sub-sim-check(trans(S,T), TIL, p NzD)} else {S | nil} .
+    eq if true then {FC1} else {FC2} = FC1 .
+    eq if true then {FC1} else {FC2} = FC2 .
+}
+
+open SIM-REVISED-4TH .
+    red sim-check((locked: false,pc1: rs,pc2: rs,pc3: rs,pc4: rs), 123, 10) .
+    -- reduce in %SIM-REVISED-4TH : (sim-check((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs),123,10)):FComp4Th
+    -- ((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs) | ((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: ms) | ((locked: false , pc1: rs , pc2: rs , pc3: ms , pc4: ms) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: rs , pc3: ms , pc4: cs) | nil))))))))))):FComp4Th
+    -- (0.0000 sec for parse, 0.0003 sec for 217 rewrites + 296 matches)
+
+    red sim-check((locked: false,pc1: rs,pc2: rs,pc3: rs,pc4: rs), 1234, 10) .
+    -- reduce in %SIM-REVISED-4TH : (sim-check((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs),1234,10)):FComp4Th
+    -- ((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs) | ((locked: false , pc1: rs , pc2: rs , pc3: ms , pc4: rs) | ((locked: false , pc1: ms , pc2: rs , pc3: ms , pc4: rs) | ((locked: false , pc1: ms , pc2: ms , pc3: ms , pc4: rs) | ((locked: false , pc1: ms , pc2: ms , pc3: ms , pc4: ms) | ((locked: true , pc1: cs , pc2: ms , pc3: ms , pc4: ms) | ((locked: true , pc1: cs , pc2: cs , pc3: ms , pc4: ms) | ((locked: false , pc1: rs , pc2: cs , pc3: ms , pc4: ms) | ((locked: false , pc1: ms , pc2: cs , pc3: ms , pc4: ms) | ((locked: true , pc1: cs , pc2: cs , pc3: ms , pc4: ms) | ((locked: false , pc1: rs , pc2: cs , pc3: ms , pc4: ms) | nil))))))))))):FComp4Th
+    -- (0.0000 sec for parse, 0.0002 sec for 214 rewrites + 296 matches)
+
+    red sim-check((locked: false,pc1: rs,pc2: rs,pc3: rs,pc4: rs), 12345, 10) .
+    -- reduce in %SIM-REVISED-4TH : (sim-check((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs),12345,10)):FComp4Th
+    -- ((locked: false , pc1: rs , pc2: rs , pc3: rs , pc4: rs) | ((locked: false , pc1: rs , pc2: ms , pc3: rs , pc4: rs) | ((locked: false , pc1: rs , pc2: ms , pc3: ms , pc4: rs) | ((locked: false , pc1: rs , pc2: ms , pc3: ms , pc4: ms) | ((locked: false , pc1: ms , pc2: ms , pc3: ms , pc4: ms) | ((locked: true , pc1: cs , pc2: ms , pc3: ms , pc4: ms) | ((locked: false , pc1: rs , pc2: ms , pc3: ms , pc4: ms) | ((locked: true , pc1: rs , pc2: ms , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: ms , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: ms , pc3: ms , pc4: cs) | ((locked: true , pc1: rs , pc2: ms , pc3: ms , pc4: cs) | nil))))))))))):FComp4Th
+    -- (0.0000 sec for parse, 0.0002 sec for 217 rewrites + 303 matches)
+close

@@ -1,0 +1,169 @@
+-- -----------------------------------------
+-- Simulation of the Mutex Protocol
+-- Let us consider a multi‐threaded program in which multi‐threads are running simultaneously and sharing some resources, such as objects.
+-- Some shared resources must be used mutually exclusively by at most one thread at any given moment.
+-- A mechanism to achieve this is called a mutual exclusion (Mutex) protocol.
+-- Suppose that there are two threads t1 & t2 that share a Boolean variable locked whose initial value is false and execute the following pseudo‐code:
+-- Loop: “Remainder Section”
+--     rs: while locked = true {}
+--     ms: locked := true;
+--         “Critical Section”
+--     cs: locked := false;
+-- Each thread t is at rs, ms or cs. When t is at rs, it can check if locked is false. If so, it moves to ms and sets locked true, entering “Critical Section” and doing something that requires some shared resources. Otherwise, it stays at rs. When t is at cs, it sets locked false, going back to “Remainder Section”.
+-- Each state of the protocol is characterized by three values: locked, the location of t1 and the location of t2. Therefore, a state of the protocol is expressed as the following record:
+-- (locked: b, pc1: l1, pc2: l2)
+
+in sample_infinite_lists
+
+mod! LOC {
+    [Loc]
+    ops rs ms cs : -> Loc {constr} .
+}
+
+mod! STATE principal-sort State {
+    pr(LOC)
+    [State]
+    op (locked:_,pc1:_,pc2:_) : Bool Loc Loc -> State {constr} .
+}
+
+mod! TID {
+    [Tid]
+    ops t1 t2 : -> Tid {constr} .
+    op if_then{_}else{_} : Bool Tid Tid -> Tid .
+    
+    vars T1 T2 : Tid .
+
+    eq if true then {T1} else {T2} = T1 .
+    eq if false then {T1} else {T2} = T2 .
+}
+
+mod! FMUTEX {
+    pr(STATE)
+    pr(TID)
+    
+    op trans : State Tid -> State .
+    vars L1 L2 : Loc .
+    var B : Bool .
+    
+    -- t1
+    eq trans((locked: true,pc1: rs,pc2: L2), t1) = (locked: true,pc1: rs,pc2: L2) .
+    eq trans((locked: false,pc1: rs,pc2: L2), t1) = (locked: false,pc1: ms,pc2: L2) .
+    eq trans((locked: B,pc1: ms,pc2: L2), t1) = (locked: true,pc1: cs,pc2: L2) .
+    eq trans((locked: B,pc1: cs,pc2: L2), t1) = (locked: false,pc1: rs,pc2: L2) .
+    -- t2
+    eq trans((locked: true,pc1: L1,pc2: rs), t2) = (locked: true,pc1: L1,pc2: rs) .
+    eq trans((locked: false,pc1: L1,pc2: rs), t2) = (locked: false,pc1: L1,pc2: ms) .
+    eq trans((locked: B,pc1: L1,pc2: ms), t2) = (locked: true,pc1: L1,pc2: cs) .
+    eq trans((locked: B,pc1: L1,pc2: cs), t2) = (locked: false,pc1: L1,pc2: rs) .
+}
+
+mod! COMP {
+    pr(INF-LIST(STATE)
+        * { sort InfList -> Comp, sort List -> FComp } )
+}
+
+
+mod! SCHED {
+    pr(NAT)
+    pr(INF-LIST(TID)
+        * {sort InfList -> Sched} )
+
+    op sched : Nat -> Sched .
+    var N : Nat .
+    eq sched(N) = if 2 divides N then {t1 | sched(N quo 2)} else {t2 | sched(N quo 2)} .
+}
+
+open SCHED .
+    red take(sched(123),20) .
+    -- reduce in %SCHED : (take(sched(123),10)):List
+    -- (t2 | (t2 | (t1 | (t2 | (t2 | (t2 | (t2 | (t1 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 64 rewrites + 80 matches)
+
+
+    red take(sched(1234),20) .
+    -- reduce in %SCHED : (take(sched(1234),10)):List
+    -- (t1 | (t2 | (t1 | (t1 | (t2 | (t1 | (t2 | (t2 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0001 sec for 64 rewrites + 79 matches)
+
+    red take(sched(12345),20) .
+    -- reduce in %SCHED : (take(sched(12345),10)):List
+    -- (t2 | (t1 | (t1 | (t2 | (t2 | (t2 | (t1 | (t1 | (t1 | (t1 | nil)))))))))):List
+    -- (0.0000 sec for parse, 0.0000 sec for 64 rewrites + 78 matches)
+close
+
+mod! SIM {
+    pr(FMUTEX)
+    pr(COMP)
+    pr(SCHED)
+    
+    op sim : State Nat -> Comp .
+    op sub-sim : State Sched -> Comp .
+    var S : State .
+    var N : Nat .
+    var NzD : NzNat .
+    var T : Tid .
+    var TIL : Sched .
+    
+    eq sim(S,N) = sub-sim(S,sched(N)) .
+    eq sub-sim(S,T | TIL) = S | sub-sim(trans(S,T),TIL) .
+}
+
+open SIM .
+    red take(sim((locked: false, pc1: rs, pc2: rs),123), 10) .
+    -- reduce in %SIM : (take(sim((locked: false , pc1: rs , pc2: rs),123),10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: ms , pc2: rs) | ((locked: true , pc1: cs , pc2: rs) | nil)))))))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 86 rewrites + 144 matches)
+
+    red take(sim((locked: false, pc1: rs, pc2: rs),1234), 10) .
+    -- reduce in %SIM : (take(sim((locked: false , pc1: rs , pc2: rs),1234),10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: ms , pc2: rs) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | nil)))))))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 86 rewrites + 133 matches)
+
+    red take(sim((locked: false, pc1: rs, pc2: rs),12345), 10) .
+    -- reduce in %SIM : (take(sim((locked: false , pc1: rs , pc2: rs),12345),10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: true , pc1: cs , pc2: cs) | ((locked: false , pc1: cs , pc2: rs) | ((locked: false , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | nil)))))))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 86 rewrites + 135 matches)
+close
+
+mod! SIM-REVISED {
+    pr(FMUTEX)
+    pr(COMP)
+    pr(SCHED)
+
+    op mutex : State -> Bool .
+    op sim-check : State Nat Nat -> FComp .
+    op sub-sim-check : State Sched Nat -> FComp .
+    op if_then{_}else{_} : Bool FComp FComp -> FComp .
+    vars FC1 FC2 : FComp .
+    vars S : State .
+    vars N D : Nat .
+    var NzD : NzNat .
+    var T : Tid .
+    var TIL : Sched 
+    vars L1 L2 : Loc .
+    var B : Bool .
+
+    eq mutex((locked: B,pc1: L1,pc2: L2)) = not (L1 == cs and L2 == cs) .
+    eq sim-check(S, N, D) = sub-sim-check(S, sched(N), D) .
+    eq sub-sim-check(S,T | TIL, 0) = S | nil .
+    eq sub-sim-check(S,T | TIL, NzD) = if mutex(S) then {S | sub-sim-check(trans(S,T), TIL, p NzD)} else {S | nil} .
+    eq if true then {FC1} else {FC2} = FC1 .
+    eq if true then {FC1} else {FC2} = FC2 .
+}
+
+open SIM-REVISED .
+    red sim-check((locked: false,pc1: rs,pc2: rs), 123, 10) .
+    -- reduce in %SIM-REVISED : (sim-check((locked: false , pc1: rs , pc2: rs),123,10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: ms , pc2: rs) | ((locked: true , pc1: cs , pc2: rs) | ((locked: false , pc1: rs , pc2: rs) | nil))))))))))):FComp
+    -- (0.0000 sec for parse, 0.0002 sec for 145 rewrites + 223 matches)
+
+    red sim-check((locked: false,pc1: rs,pc2: rs), 1234, 10) .
+    -- reduce in %SIM-REVISED : (sim-check((locked: false , pc1: rs , pc2: rs),1234,10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: ms , pc2: rs) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: true , pc1: rs , pc2: cs) | ((locked: true , pc1: rs , pc2: cs) | ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | nil))))))))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 145 rewrites + 212 matches)
+
+    red sim-check((locked: false,pc1: rs,pc2: rs), 12345, 10) .
+    -- reduce in %SIM-REVISED : (sim-check((locked: false , pc1: rs , pc2: rs),12345,10)):FComp
+    -- ((locked: false , pc1: rs , pc2: rs) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | (if false then { ((locked: true , pc1: cs , pc2: cs) | ((locked: false , pc1: cs , pc2: rs) | ((locked: false , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | ((locked: false , pc1: ms , pc2: ms) | ((locked: true , pc1: cs , pc2: ms) | ((locked: false , pc1: rs , pc2: ms) | nil))))))) } else { ((locked: true , pc1: cs , pc2: cs) | nil) }))))):FComp
+    -- (0.0000 sec for parse, 0.0001 sec for 144 rewrites + 217 matches)
+close
