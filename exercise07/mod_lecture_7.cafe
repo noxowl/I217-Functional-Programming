@@ -331,7 +331,7 @@ mod! QLOCK {
     trans [try] : {(queue: (T ; Q1)) (pc[T]: ws) OCs}
     => {(queue: (T ; Q1)) (pc[T]: cs) OCs} .
 
-    trans [exit1] : {(queue: (T1 ; Q1)) (pc[T]: cs) OCs}
+    trans [exit1] : {(queue: (T ; Q1)) (pc[T]: cs) OCs}
     => {(queue: Q1) (pc[T]: rs) OCs} .
     trans [exit2] : {(queue: emq) (pc[T]: cs) OCs}
     => {(queue: emq) (pc[T]: rs) OCs} .
