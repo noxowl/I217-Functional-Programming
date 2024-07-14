@@ -1,0 +1,68 @@
+in tas-misc
+
+mod! TAS-OCOMP-MULTISET principal-sort TasOCompMultiset {
+    pr(TAS-TID)
+    pr(TAS-LOC)
+    [TasOCompMultiset]
+    op (pc[_]:_) : TasTid TasLoc -> TasOCompMultiset {constr} .
+    op (locked:_) : Bool -> TasOCompMultiset {constr} .
+}
+
+mod! TAS-STATE-MULTISET {
+    pr(MULTISET(TAS-OCOMP-MULTISET) * {
+        sort MSet -> TasMOComps
+        }
+    )
+    [TasStateMultiset]
+    op {_} : TasMOComps -> TasStateMultiset {constr} .
+
+}
+
+mod! TAS-MULTISET {
+    pr(TAS-STATE-MULTISET)
+    pr(TAS-OCOMP-MULTISET)
+    vars T : TasTid .
+    var B : Bool .
+    var OCs : TasMOComps .
+
+    trans [try] : {(locked: false) (pc[T]: rs) OCs} => {(locked: true) (pc[T]: cs) OCs} .
+    trans [exit] : {(locked: true) (pc[T]: cs) OCs} => {(locked: false) (pc[T]: rs) OCs} .
+}
+
+open TAS-MULTISET .
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs) (pc[t4]: rs)} =(1,*)=>* {(pc[t1]: cs) (pc[t2]: cs)} .
+    -- reduce in %TAS-MULTISET : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((pc [ t3 ] : rs) ((locked: false) (pc [ t4 ] : rs))))) }) = ( 1 , * ) =>* ({ ((pc [ t1 ] : cs) (pc [ t2 ] : cs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0001 sec for parse, 0.0007 sec for 9 rewrites + 199 matches, 4 memo hits)
+
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs) (pc[t4]: rs)} =(1,*)=>* {(pc[t2]: cs) (pc[t3]: cs)} .
+    -- reduce in %TAS-MULTISET : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((pc [ t3 ] : rs) ((locked: false) (pc [ t4 ] : rs))))) }) = ( 1 , * ) =>* ({ ((pc [ t2 ] : cs) (pc [ t3 ] : cs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0001 sec for parse, 0.0007 sec for 9 rewrites + 199 matches, 4 memo hits)
+
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs) (pc[t4]: rs)} =(1,*)=>* {(pc[t3]: cs) (pc[t4]: cs)} .
+    -- reduce in %TAS-MULTISET : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((pc [ t3 ] : rs) ((locked: false) (pc [ t4 ] : rs))))) }) = ( 1 , * ) =>* ({ ((pc [ t3 ] : cs) (pc [ t4 ] : cs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0001 sec for parse, 0.0006 sec for 9 rewrites + 199 matches, 4 memo hits)
+
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs) (pc[t4]: rs)} =(1,*)=>* {(pc[t1]: cs) (pc[t4]: cs)} .
+    -- reduce in %TAS-MULTISET : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((pc [ t3 ] : rs) ((locked: false) (pc [ t4 ] : rs))))) }) = ( 1 , * ) =>* ({ ((pc [ t1 ] : cs) (pc [ t4 ] : cs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0002 sec for parse, 0.0010 sec for 9 rewrites + 199 matches, 4 memo hits)
+
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs) (pc[t4]: rs)} =(1,*)=>* {(pc[t2]: cs) (pc[t4]: cs)} .
+    -- reduce in %TAS-MULTISET : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((pc [ t3 ] : rs) ((locked: false) (pc [ t4 ] : rs))))) }) = ( 1 , * ) =>* ({ ((pc [ t2 ] : cs) (pc [ t4 ] : cs)) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0002 sec for parse, 0.0010 sec for 9 rewrites + 199 matches, 4 memo hits)
+
+    red {(locked: false) (pc[t1]: rs) (pc[t2]: rs) (pc[t3]: rs) (pc[t4]: rs)} =(1,*)=>* {(pc[t1]: cs) (pc[t2]: cs) (pc[t3]: cs) (pc[t4]: cs)} .
+    -- reduce in %TAS-MULTISET : (({ ((pc [ t2 ] : rs) ((pc [ t1 ] : rs) ((pc [ t3 ] : rs) ((locked: false) (pc [ t4 ] : rs))))) }) = ( 1 , * ) =>* ({ ((pc [ t4 ] : cs) ((pc [ t3 ] : cs) ((pc [ t1 ] : cs) (pc [ t2 ] : cs)))) })):Bool
+    -- ** No more possible transitions.
+    -- (false):Bool
+    -- (0.0003 sec for parse, 0.0011 sec for 9 rewrites + 199 matches, 4 memo hits)
+close

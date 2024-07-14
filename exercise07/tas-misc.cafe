@@ -1,0 +1,15 @@
+mod! MULTISET(E :: TRIV) {
+    [Elt.E < MSet]
+    op emp : -> MSet {constr} .
+    op _ _ : MSet MSet -> MSet {constr assoc comm id: emp} .
+}
+
+mod! TAS-TID {
+    [TasTid]
+    ops t1 t2 t3 t4 : -> TasTid .
+}
+
+mod! TAS-LOC {
+    [TasLoc]
+    ops rs cs : -> TasLoc .
+}
