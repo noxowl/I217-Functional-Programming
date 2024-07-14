@@ -12,26 +12,32 @@ open NAT .
     eq ext-fib-sub(NzX) = ext-fib(p NzX) + ext-fib(p p NzX) + ext-fib(p p p NzX) .
     --
     red ext-fib(0) .
+    -- reduce in %NAT : (ext-fib(0)):Nat
     -- (0):Zero
-    -- (0.0000 sec for parse, 0.0001 sec for 3 rewrites + 3 matches)
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 4 matches)
 
     red ext-fib(1) .
+    -- reduce in %NAT : (ext-fib(1)):Nat
     -- (1):NzNat
-    -- (0.0000 sec for parse, 0.0000 sec for 5 rewrites + 6 matches)
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 4 matches)
 
     red ext-fib(2) .
+    -- reduce in %NAT : (ext-fib(2)):Nat
     -- (2):NzNat
-    -- (0.0000 sec for parse, 0.0000 sec for 7 rewrites + 9 matches)
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 4 matches)
 
     red ext-fib(3) .
+    -- reduce in %NAT : (ext-fib(3)):Nat
     -- (3):NzNat
-    -- (0.0000 sec for parse, 0.0002 sec for 36 rewrites + 42 matches)
+    -- (0.0000 sec for parse, 0.0001 sec for 25 rewrites + 26 matches)
 
     red ext-fib(5) .
+    -- reduce in %NAT : (ext-fib(5)):Nat
     -- (11):NzNat
-    -- (0.0000 sec for parse, 0.0004 sec for 133 rewrites + 156 matches)
+    -- (0.0000 sec for parse, 0.0001 sec for 88 rewrites + 92 matches)
 
     red ext-fib(7) .
+    -- reduce in %NAT : (ext-fib(7)):Nat
     -- (37):NzNat
-    -- (0.0000 sec for parse, 0.0064 sec for 319 rewrites + 334 matches)
+    -- (0.0000 sec for parse, 0.0005 sec for 319 rewrites + 334 matches)
 close
