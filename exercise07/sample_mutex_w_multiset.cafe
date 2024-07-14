@@ -20,7 +20,8 @@ mod! STATE {
 }
 
 mod! FMUTEX { pr(STATE)
-    vars T T1 T2 : Tid . var B : Bool .
+    vars T T1 T2 : Tid .
+    var B : Bool .
     var OCs : OComps .
     
     trans [want] : {(locked: false) (pc[T]: rs) OCs} => {(locked: false) (pc[T]: ms) OCs} .
