@@ -1,0 +1,90 @@
+--
+-- Minila interpreter
+--
+
+--
+-- - Function interpret interprets a given Minila program,
+--   returning the environment made by executing the progam.
+-- - Function eval takes a Minila program and an environment 
+--   and executes the program under the environment, returning
+--   the environment updated by executing the progam.
+-- - Function evalAssign executes an assignment under a given
+--   environment.
+-- - Function evalIf executes an If statement under a given
+--   environment.
+-- - Function evalWhile executes a While statement under a given
+--   environment.
+-- - Function evalExp computes an expression under a given
+--   environment, returning the result (a natural number).
+--
+mod! INTERPRET {
+  pr(STM)
+  pr(ENV)
+  op interpret : Stm -> Env&Err .
+  op eval : Stm Env&Err -> Env&Err .
+  op evalAssign : Var Nat&Err Env&Err -> Env&Err .
+  op evalIf : Nat&Err Stm Stm Env&Err -> Env&Err .
+  op evalWhile : Exp Stm Env&Err -> Env&Err .
+  op evalExp : Exp Env&Err -> Nat&Err .
+  vars E E1 E2 : Exp .
+  vars S S1 S2 : Stm .
+  var V : Var .
+  var EV : Env .
+  var N : Nat .
+  -- interpret
+  -- eval
+  -- evalAssign
+  -- evalIf
+  -- evalWhile
+  -- evalExp
+}
+
+eof
+
+open INTERPRET .
+  ops x y z tmp : -> Var .
+  
+  op p1 : -> Stm .
+  eq p1 = x := n(1) ;
+          y := n(1) ;
+          while y < n(10) || y === n(10) {
+            x := x * y ;
+            y := y + n(1) ;
+          } .
+  red interpret(p1) .
+
+  op p2 : -> Stm .
+  eq p2 = x := n(1) ;
+          for y n(1) n(10) {
+            x := y * x ;
+          } .
+  red interpret(p2) .
+
+  op p3 : -> Stm .
+  eq p3 = x := n(24) ;
+          y := n(30) ;
+          while y =!= n(0) {
+            z := x % y ;
+            x := y ;
+            y := z ;
+          } .
+  red interpret(p3) .
+
+  op p4 : -> Stm .
+  eq p4 = x := n(20000000000000000) ;
+          y := n(0) ;
+          z := x ;
+          while y =!= z {
+            if ((z - y) % n(2)) === n(0) {
+              tmp := y + (z - y) / n(2) ;
+            } else {
+              tmp := y + ((z - y) / n(2)) + n(1) ;
+            }
+            if tmp * tmp > x {
+              z := tmp - n(1) ;
+            } else {
+              y := tmp ;
+            }
+          } .
+  red interpret(p4) .
+close
