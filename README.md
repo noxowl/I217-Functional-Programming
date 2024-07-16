@@ -70,7 +70,7 @@ Zero -> {0}
 ```
 
 ### 변수(Variables)와 연산자(Operators)
-변수는 특정 유형의 객체를 보유하고, 연산자는 기능을 정의한다. 변수에는 유효한 종류의 Sort가 선언되어야 하며, 동일한 유형의 변수는 vars로 한번에 선언할 수 있다. 선언된 연산자에는 입력과 출력 데이터의 종류를 표현하는 Signature가 제공되어야 한다. 
+변수는 특정 유형의 객체를 보유하고, 연산자는 기능을 정의한다. 변수에는 유효한 종류의 Sort가 선언되어야 하며, 동일한 유형의 변수는 vars로 한번에 선언할 수 있다. 선언된 연산자에는 입력과 출력 데이터의 종류를 표현하는 서명(Signature)이 제공되어야 한다. 
 
 ```
 var X : Nat
@@ -97,6 +97,104 @@ op _sum_ : Nat Nat -> NzNat
 eq power(0) = 1 .
 eq power(X) = X * X .
 ```
+
+### Modules
+CafeOBJ의 모듈은 _mod!_ 와 _mod&ast;_ 키워드로 정의된다. 위에서 언급된 Term들을 캡슐화하여 시스템의 특정 부분을 정의할 수 있다. 위에서 언급된 Imports의 ```pr(MODULE_NAME)``` 을 통해 모듈 안에서 특정 모듈의 정의를 사용할 수도 있다.
+
+mod! 키워드는 Operator가 포함된 모듈을 정의한다. 이외의 Terms들을 포함할 수 있으며, Rewrite rule을 포함할 수 있다.
+
+```
+mod! GLIST1(E :: TRIV) {
+  [Nil NnList < List]
+  op nil : -> Nil {constr} .
+  op _|_ : Elt.E List -> NnList {constr} .
+  op _@_ : List List -> List .
+  ...
+}
+```
+
+mod\* 키워드는 파라미터화된 모듈을 정의하는데 사용한다. 추상화 수준을 높일 수 있다.
+
+```
+mod* GLIST2(E :: TRIV) {
+  pr(LIST(E))
+  ...
+}
+```
+
+### 파라미터화 된 모듈(Parameterized Modules)
+모듈을 정의할 때 특정 타입이나 연산에 대한 파라미터를 받아, 이를 기반으로 모듈을 생성할 수 있게 한다. 구체적인 데이터 타입이나 연산자 대신 제네릭을 사용하여 유연성과 재사용성을 높인다. 템플릿과 제네릭 프로그래밍과 유사하다.
+
+```
+mod* MODULE_NAME(E :: PARAMETER) {
+  -- 모듈 내용
+}
+```
+
+파라미터화 된 모듈 TRIV-ERR를 통해 LIST를 정의한다고 하자. 아래와 같다.
+
+```
+mod* TRIV-ERR {
+  [Elt Err < Elt&Err]
+  op err : -> Err {constr} .
+}
+
+view TRIV-ERR2ENTRY from TRIV-ERR to ENTRY {
+  sort Elt -> Entry,
+  sort Err -> ErrEntry,
+  sort Elt&Err -> Entry&Err,
+  op err -> errEntry
+}
+
+mod! LIST(M :: TRIV-ERR) {
+  pr(NAT-ERR)
+  [List]
+  op nil : -> List {constr} .
+  op _|_ : Elt.M List -> List {constr} .
+  op _@_ : List List -> List {r-assoc} .
+  op nth : List Nat&Err -> Elt&Err.M .
+  op len : List -> Nat .
+  vars X Y : Elt.M .
+  vars L L1 : List .
+  var N : Nat .
+  var NzN : NzNat .
+  ...
+}
+
+mod! USE-LIST {
+  pr(LIST(M <= TRIV-ERR2ENTRY)) -- LIST 모듈을 TRIV-ERR2ENTRY로 인스턴스화
+}
+```
+
+### Views & Instantiation
+View는 한 모듈의 사양을 다른 모듈에 매핑하는데 사용한다. 이를 통해 두 모듈 사이의 상관관계가 정의되고, View를 참조하는 모듈이 참조되는 모듈의 특정 부분을 활용할 수 있게 된다. View 정의를 통해 생성된 View는 해당 View 이름으로 인스턴스화 된다. 사용은 다음과 같다.
+
+```
+view VIEW_NAME from SOURCE_MODULE to TARGET_MODULE {
+  sort SOURCE_SORT1 -> TARGET_SORT1 .
+  ...
+  op SOURCE_OP1 -> TARGET_OP1 .
+  ...
+}
+```
+
+구체적인 예로 generic_list 의 코드를 참고하자.
+
+```
+view TRIV-ERR2NAT-ERR from TRIV-ERR to NAT-ERR {
+  sort Elt -> Nat,
+  sort Err -> ErrNat,
+  sort Elt&Err -> Nat&Err,
+  op err -> errNat,
+}
+```
+
+* TRIV-ERR의 Elt sort를 NAT-ERR의 Nat sort와 ErrNat sort에 대응시킨다.
+* TRIV-ERR의 Elt&Err sort를 NAT-ERR의 Nat&Err sort에 대응시킨다.
+* TRIV-ERR의 err Operator를 NAT-ERR의 errNat operator에 대응시킨다.
+* 이를 통해 TRIV-ERR의 요소를 NAT-ERR의 요소로써 대응시킬 수 있게 된다.
+
+CafeOBJ의 View는 인터페이스, 타입 변환, 추상화 계층 매핑과 유사하다고 이해할 수 있다. Haskell에서는 타입 클래스 정의/타입 클래스의 인스턴스 정의가 그러하고, C++의 템플릿/템플릿 특수화가 그러하며, Python의 ABC도 어느 정도 비슷하다고 볼 수 있다.
 
 ### Tutorial: Lists
 CafeOBJ의 문법으로 리스트를 정의하고 사용할 수 있다.(lecture 2의 NATLIST, NAT-ERR에 대응)
