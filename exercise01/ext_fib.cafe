@@ -41,3 +41,47 @@ open NAT .
     -- (37):NzNat
     -- (0.0000 sec for parse, 0.0005 sec for 319 rewrites + 334 matches)
 close
+
+-- --------------------------------------
+-- Solution by Kazuhiro Ogata, Professor.
+-- --------------------------------------
+open NAT .
+    op ext-fib : Nat -> Nat .
+    op ext-fib-sub1 : NzNat -> NzNat .
+    op ext-fib-sub2 : NzNat -> NzNat .
+    var NzX : NzNat .
+
+    eq ext-fib(0) = 0 .
+    eq ext-fib(NzX) = ext-fib-sub1(p NzX) .
+    
+    eq ext-fib-sub1(0) = s(0) .
+    eq ext-fib-sub1(NzX) = ext-fib-sub2(p NzX) .
+
+    eq ext-fib-sub2(0) = s(s(0)) .
+    eq ext-fib-sub2(NzX) = ext-fib(p NzX) + ext-fib(NzX) + ext-fib(NzX + 1) .
+    --
+    red ext-fib(0) .
+    -- reduce in %NAT : (ext-fib(0)):Nat
+    -- (0):Zero
+    -- (0.0000 sec for parse, 0.0000 sec for 1 rewrites + 1 matches)
+    red ext-fib(1) .
+    -- reduce in %NAT : (ext-fib(1)):Nat
+    -- (1):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 5 matches)
+    red ext-fib(2) .
+    -- reduce in %NAT : (ext-fib(2)):Nat
+    -- (2):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 7 rewrites + 9 matches)
+    red ext-fib(3) .
+    -- reduce in %NAT : (ext-fib(3)):Nat
+    -- (3):NzNat
+    -- (0.0000 sec for parse, 0.0000 sec for 21 rewrites + 27 matches)
+    red ext-fib(5) .
+    -- reduce in %NAT : (ext-fib(5)):Nat
+    -- (11):NzNat
+    -- (0.0000 sec for parse, 0.0001 sec for 78 rewrites + 101 matches)
+    red ext-fib(7) .
+    -- reduce in %NAT : (ext-fib(7)):Nat
+    -- (37):NzNat
+    -- (0.0000 sec for parse, 0.0002 sec for 277 rewrites + 359 matches)
+close
