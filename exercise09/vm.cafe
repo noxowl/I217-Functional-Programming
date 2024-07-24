@@ -181,8 +181,15 @@ open VM .
            store(y) | load(x) | push(2) | multiply | store(x) | push(16) | load(x) |
            equal | jumpOnCond(2) | bjump(12) | quit | iln .
   red run(il1) .
+  -- reduce in %VM : (run(il1)):Env&Err
+  -- ((x , 16) | ((y , 65536) | empEnv)):Env
+  -- (0.0000 sec for parse, 0.0075 sec for 1414 rewrites + 4110 matches)
+
   eq il2 = push(1) | store(x) | push(2) | store (y) | load(y) | load(y) | multiply |
            store(y) | load(x) | push(2) | multiply | store(x) | push(64) | load(x) |
            equal | jumpOnCond(2) | bjump(12) | quit | iln .
   red run(il2) .
+  -- reduce in %VM : (run(il2)):Env&Err
+  -- ((x , 64) | ((y , 18446744073709551616) | empEnv)):Env
+  -- (0.0000 sec for parse, 0.0104 sec for 2104 rewrites + 6114 matches)
 close
