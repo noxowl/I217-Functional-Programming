@@ -1,0 +1,1130 @@
+mod! PNAT1 {
+    [PNat]
+    op 0 : -> PNat {constr} .
+    op s : PNat -> PNat {constr} .
+    vars X Y Z : PNat .
+
+    -- declared by built-in moudle EQL
+    -- op _=_ : S S -> Bool {comm} .
+    -- eq (X = X) = true .
+    -- eq (true = false) = false .
+
+    -- 귀납적 식을 정의해둔다.
+    eq (0 = s(Y)) = false .
+    eq (s(X) = s(Y)) = (X = Y) .
+
+    op _+_ : PNat PNat -> PNat .
+    -- (add 식 1)
+    eq 0 + Y = Y .
+    -- (add 식 2)
+    eq s(X) + Y = s(X + Y) .
+    -- 이에 따라...
+    -- _s(s(s(0))) + s(s(s(s(0))))_
+    -- → s( _s(s(0)) + s(s(s(s(0))))_ )  by(add 2)
+    -- → s(s( _s(0) + s(s(s(s(0))))_ ))  by(add 2)
+    -- → s(s(s( _0 + s(s(s(s(0))))_ )))  by(add 2)
+    -- → s(s(s(s(s(s(s(0)))))))  by(add 1)
+
+    op _*_ : PNat PNat -> PNat .
+    -- (multi 식 1)
+    eq 0 * Y = 0 .
+    -- (multi 식 2)
+    eq s(X) * Y = (X * Y) + Y .
+    -- 이에 따라...
+    -- _s(s(0)) * s(s(0))_
+    -- → ( _s(0) * s(s(0))_ ) + s(s(0))  by(multi 2)
+    -- → (( _0 * s(s(0))_ ) + s(s(0))) + s(s(0))  by(multi 2)
+    -- → ( _0 + s(s(0))) + s(s(0))
+    -- → s(s(0)) + s(s(0))
+    -- → s(s(0) + s(s(0)))
+    -- → s(s(0 + s(s(0))))
+    -- → s(s(s(s(0))))
+
+    op fact1 : PNat -> PNat .
+    -- (f1-1)
+    eq fact1(0) = s(0) . 
+    -- (f1-2)
+    eq fact1(s(X)) = s(X) * fact1(X) . 
+
+    op fact2 : PNat -> PNat .
+    op sfact2 : PNat PNat -> PNat .
+    
+    -- (f2)
+    eq fact2(X) = sfact2(X,s(0)) . 
+     -- (sf2-1)
+    eq sfact2(0,Y) = Y .
+    -- (sf2-2)
+    eq sfact2(s(X),Y) = sfact2(X,s(X) * Y) .
+}
+
+-- Theorem 1 [associativity of _+_ (assoc+)]
+-- (X + Y) + Z = X + (Y + Z)
+-- Proof of Theorem 1 By structural induction on X
+-- I. Base case
+open PNAT1 .
+    -- fresh constants
+    ops y z : -> PNat .
+    -- check
+    red (0 + y) + z = 0 + (y + z) .
+    -- reduce in %PNAT1 : (((0 + y) + z) = (0 + (y + z))):Bool
+    -- 1>[1] rule: eq (0 + Y) = Y
+    --     { Y |-> y }
+    -- 1<[1] (0 + y):PNat --> (y):PNat
+
+    -- 1>[2] rule: eq (0 + Y) = Y
+    --     { Y |-> (y + z) }
+    -- 1<[2] (0 + (y + z)):PNat --> (y + z):PNat
+
+    -- 1>[3] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (y + z) }
+    -- 1<[3] ((y + z) = (y + z)):Bool --> (true):Bool
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0001 sec for 3 rewrites + 13 matches)
+close
+-- II. Induction case
+open PNAT1 .
+    -- fresh constants
+    ops x y z : -> PNat .
+    -- IH
+    eq (x + Y) + Z = x + (Y + Z) .
+    -- check
+    red (s(x) + y) + z = s(x) + (y + z) .
+    -- reduce in %PNAT1 : (((s(x) + y) + z) = (s(x) + (y + z))):Bool
+    -- 1>[1] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> x, Y |-> y }
+    -- 1<[1] (s(x) + y):PNat --> (s((x + y))):PNat
+
+    -- 1>[2] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> (x + y), Y |-> z }
+    -- 1<[2] (s((x + y)) + z):PNat --> (s(((x + y) + z))):PNat
+
+    -- 1>[3] rule: eq ((x + Y) + Z) = (x + (Y + Z))
+    --     { Y |-> y, Z |-> z }
+    -- 1<[3] ((x + y) + z):PNat --> (x + (y + z)):PNat
+
+    -- 1>[4] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> x, Y |-> (y + z) }
+    -- 1<[4] (s(x) + (y + z)):PNat --> (s((x + (y + z)))):PNat
+
+    -- 1>[5] rule: eq (s(X) = s(Y)) = (X = Y)
+    --     { Y |-> (x + (y + z)), X |-> (x + (y + z)) }
+    -- 1<[5] (s((x + (y + z))) = s((x + (y + z)))):Bool --> ((x + (y + z)) = (x + (y + z))):Bool
+
+    -- 1>[6] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (x + (y + z)) }
+    -- 1<[6] ((x + (y + z)) = (x + (y + z))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0003 sec for 6 rewrites + 75 matches)
+close
+-- End of Proof of Theorem 1
+
+
+-- Theorem 2 [Commutativity of _+_ (comm+)] 
+-- X + Y = Y + X 
+-- 
+-- Proof of Theorem 2 By structural induction on X.
+-- Let x,y be fresh constants of PNat. 
+-- I. Base case
+-- What to show is 0 + y = y + 0.
+-- _0 + y_ → y  by(add 1)
+-- 
+-- Since y + 0 cannot be rewritten, we need a lemma
+-- that makes it possible to conclude that y + 0 equals y. 
+-- We conjecture the following lemma:
+-- (The lemma will be proved later.)
+-- -------------------
+-- X + 0 = X -- (rz+)
+-- -------------------
+-- _y + 0_ → y  by(rz+)
+--
+-- II. Induction case
+-- What to show is s(x) + y = y + s(x)
+-- assuming the induction hypothesis x + Y = Y + x --(IH)
+-- _s(x) + y_ → s(_x + y_)  by(add 2)
+-- → s(y + x)  by(IH)
+--
+-- y + s(x) cannot be rewritten, and then we need a lemma
+-- that makes it possible to conclude that y + s(x) equals s(y + x).
+-- We conjecture the following lemma:
+-- (The lemma will be proved later.)
+-- ------------------------------
+-- X + s(Y) = s(X + Y)  -- (rs+)
+-- ------------------------------
+-- _y + s(x)_ → s(y + x)  by(rs+)
+--
+-- End of Proof of Theorem 2
+
+-- Begin of CafeOBJ Proof score
+-- 
+-- Theorem 2 [Commutativity of _+_ (comm+)] X + Y = Y + X
+-- Proof of Theorem 2 By structural induction on X.
+-- I. Base case
+open PNAT1 .
+    -- fresh constants
+    op y : -> PNat .
+
+    -- lemmas
+    -- (rz+)
+    eq X + 0 = X . 
+    -- check
+    red 0 + y = y + 0 .
+    -- reduce in %PNAT1 : ((0 + y) = (y + 0)):Bool
+    -- 1>[1] rule: eq (0 + Y) = Y
+    --     { Y |-> y }
+    -- 1<[1] (0 + y):PNat --> (y):PNat
+
+    -- 1>[2] rule: eq (X + 0) = X
+    --     { X |-> y }
+    -- 1<[2] (y + 0):PNat --> (y):PNat
+
+    -- 1>[3] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> y }
+    -- 1<[3] (y = y):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0001 sec for 3 rewrites + 6 matches)
+close
+
+-- II. Induction case
+open PNAT1 .
+    -- fresh constants
+    ops x y : -> PNat .
+
+    -- lemmas
+    -- (rs+)
+    eq X + s(Y) = s(X + Y) .
+    -- IH
+    eq x + Y = Y + x .
+    -- check
+    red s(x) + y = y + s(x) .
+    -- reduce in %PNAT1 : ((s(x) + y) = (y + s(x))):Bool
+    -- 1>[1] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> x, Y |-> y }
+    -- 1<[1] (s(x) + y):PNat --> (s((x + y))):PNat
+
+    -- 1>[2] rule: eq (x + Y) = (Y + x)
+    --     { Y |-> y }
+    -- 1<[2] (x + y):PNat --> (y + x):PNat
+
+    -- 1>[3] rule: eq (X + s(Y)) = s((X + Y))
+    --     { X |-> y, Y |-> x }
+    -- 1<[3] (y + s(x)):PNat --> (s((y + x))):PNat
+
+    -- 1>[4] rule: eq (s(X) = s(Y)) = (X = Y)
+    --     { Y |-> (y + x), X |-> (y + x) }
+    -- 1<[4] (s((y + x)) = s((y + x))):Bool --> ((y + x) = (y + x)):Bool
+
+    -- 1>[5] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (y + x) }
+    -- 1<[5] ((y + x) = (y + x)):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0002 sec for 5 rewrites + 28 matches)
+close
+-- End of Proof of Theorem 2
+
+
+-- Lemma 1 [Right zero of _+_ (rz+)] X + 0 = X
+-- Proof of Lemma 1 By structural induction on X.
+-- Let x be fresh constants of PNat.
+-- I. Base case
+-- What to show is 0 + 0 = 0.
+-- _0 + 0_ → 0  by(add 1)
+--
+-- II. Induction case
+-- What to show is s(x) + 0 = s(x)
+-- assuming the induction hypothesis x + 0 = x --(IH)
+-- _s(x) + 0_ → s(_x + 0_)  by(add 2)
+-- → s(x)  by(IH)
+-- End of Proof of Lemma 1
+
+-- Lemma 1 [Right zero of _+_ (rz+)] X + 0 = X
+-- Proof of Lemma 1 By structural induction on X.
+-- I. Base case
+open PNAT1 .
+    -- check
+    red 0 + 0 = 0 .
+    -- reduce in %PNAT1 : ((0 + 0) = 0):Bool
+    -- 1>[1] rule: eq (0 + Y) = Y
+    --     { Y |-> 0 }
+    -- 1<[1] (0 + 0):PNat --> (0):PNat
+
+    -- 1>[2] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> 0 }
+    -- 1<[2] (0 = 0):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 2 rewrites + 4 matches)
+close
+-- II. Induction case
+open PNAT1 .
+    -- fresh constants
+    op x : -> PNat .
+    -- IH
+    eq x + 0 = x .
+    -- check
+    red s(x) + 0 = s(x) .
+    -- reduce in %PNAT1 : ((s(x) + 0) = s(x)):Bool
+    -- 1>[1] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> x, Y |-> 0 }
+    -- 1<[1] (s(x) + 0):PNat --> (s((x + 0))):PNat
+
+    -- 1>[2] rule: eq (x + 0) = x
+    --     {}
+    -- 1<[2] (x + 0):PNat --> (x):PNat
+
+    -- 1>[3] rule: eq (s(X) = s(Y)) = (X = Y)
+    --     { Y |-> x, X |-> x }
+    -- 1<[3] (s(x) = s(x)):Bool --> (x = x):Bool
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> x }
+    -- 1<[4] (x = x):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 4 rewrites + 9 matches)
+close
+-- End of Proof of Lemma 1
+
+-- Lemma 2 [Right successor of _+_ (rs+)] X + s(Y) = s(X + Y)
+-- Proof of Lemma 2 By structural induction on X.
+-- Let x,y be fresh constants of PNat.
+--
+-- I. Base case
+-- What to show is 0 + s(y) = s(0 + y).
+-- _0 + s(y)_ → s(y)  by(add 1)
+-- s(_0 + y_) → s(y)  by(add 1)
+--
+-- II. Induction case
+-- What to show is s(x) + s(y) = s(s(x) + y)
+-- assuming the induction hypothesis x + s(Y) = s(x + Y) --(IH)
+-- _s(x) + s(y)_ → s(_x + s(y)_)  by(add 2)
+-- s(_s(x) + y)_ → s(s(x + y))  by(add 2)
+-- → s(s(x + y))  by(IH)
+
+-- Lemma 2 [Right successor of _+_ (rs+)] X + s(Y) = s(X + Y)
+-- Proof of Lemma 2 By structural induction on X.
+-- I. Base case
+open PNAT1 .
+    -- fresh constants
+    op y : -> PNat .
+    -- check
+    red 0 + s(y) = s(0 + y) .
+    -- reduce in %PNAT1 : ((0 + s(y)) = s((0 + y))):Bool
+    -- 1>[1] rule: eq (0 + Y) = Y
+    --     { Y |-> s(y) }
+    -- 1<[1] (0 + s(y)):PNat --> (s(y)):PNat
+
+    -- 1>[2] rule: eq (0 + Y) = Y
+    --     { Y |-> y }
+    -- 1<[2] (0 + y):PNat --> (y):PNat
+
+    -- 1>[3] rule: eq (s(X) = s(Y)) = (X = Y)
+    --     { Y |-> y, X |-> y }
+    -- 1<[3] (s(y) = s(y)):Bool --> (y = y):Bool
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> y }
+    -- 1<[4] (y = y):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 4 rewrites + 7 matches)
+close
+
+-- II. Induction case
+open PNAT1 .
+    -- fresh constants
+    ops x y : -> PNat .
+    -- IH
+    eq x + s(Y) = s(x + Y) .
+    -- check
+    red s(x) + s(y) = s(s(x) + y) .
+    -- reduce in %PNAT1 : ((s(x) + s(y)) = s((s(x) + y))):Bool
+    -- 1>[1] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> x, Y |-> s(y) }
+    -- 1<[1] (s(x) + s(y)):PNat --> (s((x + s(y)))):PNat
+
+    -- 1>[2] rule: eq (x + s(Y)) = s((x + Y))
+    --     { Y |-> y }
+    -- 1<[2] (x + s(y)):PNat --> (s((x + y))):PNat
+
+    -- 1>[3] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> x, Y |-> y }
+    -- 1<[3] (s(x) + y):PNat --> (s((x + y))):PNat
+
+    -- 1>[4] rule: eq (s(X) = s(Y)) = (X = Y)
+    --     { Y |-> s((x + y)), X |-> s((x + y)) }
+    -- 1<[4] (s(s((x + y))) = s(s((x + y)))):Bool --> (s((x + y)) = s((x + y))):Bool
+
+    -- 1>[5] rule: eq (s(X) = s(Y)) = (X = Y)
+    --     { Y |-> (x + y), X |-> (x + y) }
+    -- 1<[5] (s((x + y)) = s((x + y))):Bool --> ((x + y) = (x + y)):Bool
+
+    -- 1>[6] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (x + y) }
+    -- 1<[6] ((x + y) = (x + y)):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 6 rewrites + 32 matches)
+close
+-- End of Proof of Lemma 2
+-- End of CafeOBJ Proof score
+
+-- CafeOBJ에는 임포트한 모듈의 operator만 덮어쓰는 것이 불가능함.
+mod! PNAT2 {
+    [PNat]
+    op 0 : -> PNat {constr} .
+    op s : PNat -> PNat {constr} .
+    vars X Y Z : PNat .
+
+    eq (0 = s(Y)) = false .
+    eq (s(X) = s(Y)) = (X = Y) .
+
+    -- 이 부분이 PNAT1과 다름
+    op _+_ : PNat PNat -> PNat {assoc comm} .
+
+    eq 0 + Y = Y .
+    eq s(X) + Y = s(X + Y) .
+
+    op _*_ : PNat PNat -> PNat .
+    eq 0 * Y = 0 .
+    eq s(X) * Y = (X * Y) + Y .
+}
+
+-- ---------------------
+-- Associativity of _*_
+-- ---------------------
+-- Theorem 3 [Associativity of _*_ (assoc*)]
+-- (X * Y) * Z = X * (Y * Z)
+-- Proof of Theorem 3 By structural induction on X.
+-- Let x,y,z be fresh constants of PNat.
+-- I. Base case
+-- What to show is (0 * y) * z = 0 * (y * z).
+-- _(0 * y)_ * z
+-- → 0 * z  by(multi 1)
+-- → 0  by(multi 1)
+-- 
+-- 0 * (y * z)
+-- → 0  by(multi 1)
+-- 
+-- II. Induction case
+-- What to show is (s(x) * y) * z = s(x) * (y * z)
+-- assuming the induction hypothesis (x * Y) * Z = x * (Y * Z) --(IH)
+-- ( _s(x) * y_ ) * z
+-- → ((x * y) + y) * z  by(multi 2)
+-- 
+-- s(x) * (y * z)
+-- → (x * (y * z)) + (y * z)  by(multi 2)
+-- We cannot make the two terms rewritten to a same term and then need a lemma to do so.
+-- It seems sufficient to conjecture the following one:
+-- (X+Y)*Z=(X*Z)+(Y*Z) --(d*o+)
+-- 
+-- _((x * y) + y) * z_
+-- → ( _(x * y) * z_ ) + (y * z)  by(d*o+)
+-- → (x * (y * z)) + (y * z) by (IH)
+-- 
+-- End of Proof of Theorem 3
+-- 
+-- Lemma 3 [Distributive law of _*_ over _+_ (d*o+)]
+-- (X + Y) * Z = (X * Z) + (Y * Z)
+-- Proof of Lemma 3 By structural induction on X.
+-- Let x,y,z be fresh constants of PNat.
+-- 
+-- I. Base case
+-- What to show is (0 + y) * z = (0 * z) + (y * z).
+-- (_0 + y_) * z
+-- → y * z  by(add 1)
+-- (_0 * z_) + (y * z)
+-- → _0 + (y * z)_  by(multi 1)
+-- → y * z  by(add 1)
+-- 
+-- II. Induction case
+-- What to show is (s(x) + y) * z = (s(x) * z) + (y * z)
+-- assuming the induction hypothesis
+-- (x+Y)*Z=(x*Z)+(Y*Z) --(IH)
+-- (_s(x) + y_) * z
+-- → _s(x + y) * z_  by(add 2)
+-- → ( _(x + y) * z_ ) + z  by(multi 2)
+-- → _((x * z) + (y * z)) + z_  by(IH)
+-- → (x * z) + ( _(y * z) + z_ )  by(assoc+)
+-- → (x * z) + (z + (y * z))  by(comm+)
+-- 
+-- (s(x) * z) + (y * z)
+-- → ((x * z) + z) + (y * z) by (multi 2)
+-- → (x * z) + (z + (y * z)) by (assoc+)
+-- 
+-- End of Proof of Lemma 3
+-- 
+-- Begin of CafeOBJ Proof score
+-- 
+-- Lemma 3 [Distributive law of _*_ over _+_ (d*o+)]
+-- (X + Y) * Z = (X * Z) + (Y * Z)
+-- Proof of Lemma 3 By structural induction on X.
+-- I. Base case
+open PNAT2 .
+    -- fresh constants
+    ops y z : -> PNat .
+    -- check
+    red (0 + y) * z = (0 * z) + (y * z) .
+    -- reduce in %PNAT2 : (((0 + y) * z) = ((0 * z) + (y * z))):Bool
+    -- 1>[1] rule: eq (0 + Y) = Y
+    --     { Y |-> y }
+    -- 1<[1] (0 + y):PNat --> (y):PNat
+
+    -- 1>[2] rule: eq (0 * Y) = 0
+    --     { Y |-> z }
+    -- 1<[2] (0 * z):PNat --> (0):PNat
+
+    -- 1>[3] rule: eq (0 + Y) = Y
+    --     { Y |-> (y * z) }
+    -- 1<[3] (0 + (y * z)):PNat --> (y * z):PNat
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (y * z) }
+    -- 1<[4] ((y * z) = (y * z)):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0001 sec for 4 rewrites + 18 matches)
+close
+-- 
+-- II. Induction case
+open PNAT2 .
+    -- fresh constants
+    ops x y z : -> PNat .
+    -- IH
+    eq (x + Y) * Z = (x * Z) + (Y * Z) .
+    -- check
+    red (s(x) + y) * z = (s(x) * z) + (y * z) .
+    -- reduce in %PNAT2 : (((s(x) + y) * z) = ((s(x) * z) + (y * z))):Bool
+    -- 1>[1] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> x, Y |-> y }
+    -- 1<[1] (s(x) + y):PNat --> (s((x + y))):PNat
+
+    -- 1>[2] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> (y + x), Y |-> z }
+    -- 1<[2] (s((y + x)) * z):PNat --> (((y + x) * z) + z):PNat
+
+    -- 1>[3] rule: eq ((x + Y) * Z) = ((x * Z) + (Y * Z))
+    --     { Y |-> y, Z |-> z }
+    -- 1<[3] ((x + y) * z):PNat --> ((x * z) + (y * z)):PNat
+
+    -- 1>[4] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> z }
+    -- 1<[4] (s(x) * z):PNat --> ((x * z) + z):PNat
+
+    -- 1>[5] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (z + ((x * z) + (y * z))) }
+    -- 1<[5] ((z + ((x * z) + (y * z))) = ((y * z) + ((x * z) + z))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 5 rewrites + 61 matches)
+close
+-- End of Proof of Lemma 3
+-- 
+-- Theorem 3 [Associativity of _*_ (assoc*)]
+-- (X * Y) * Z = X * (Y * Z)
+-- Proof of Theorem 3 By structural induction on X.
+-- I. Base case
+open PNAT2 .
+    -- fresh constants
+    ops y z : -> PNat .
+    -- check
+    red (0 * y) * z = 0 * (y * z) .
+    -- reduce in %PNAT2 : (((0 * y) * z) = (0 * (y * z))):Bool
+    -- 1>[1] rule: eq (0 * Y) = 0
+    --     { Y |-> y }
+    -- 1<[1] (0 * y):PNat --> (0):PNat
+
+    -- 1>[2] rule: eq (0 * Y) = 0
+    --     { Y |-> z }
+    -- 1<[2] (0 * z):PNat --> (0):PNat
+
+    -- 1>[3] rule: eq (0 * Y) = 0
+    --     { Y |-> (y * z) }
+    -- 1<[3] (0 * (y * z)):PNat --> (0):PNat
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> 0 }
+    -- 1<[4] (0 = 0):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 6 matches)
+close
+-- 
+-- II. Induction case
+open PNAT2 .
+    -- fresh constants
+    ops x y z : -> PNat .
+    -- lemmas -- (d*o+)
+    eq (X + Y) * Z = (X * Z) + (Y * Z) .
+    -- IH
+    eq (x * Y) * Z = x * (Y * Z) .
+    -- check
+    red (s(x) * y) * z = s(x) * (y * z) .
+    -- reduce in %PNAT2 : (((s(x) * y) * z) = (s(x) * (y * z))):Bool
+    -- 1>[1] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> y }
+    -- 1<[1] (s(x) * y):PNat --> ((x * y) + y):PNat
+
+    -- 1>[2] rule: eq ((X + Y) * Z) = ((X * Z) + (Y * Z))
+    --     { Y |-> y, X |-> (x * y), Z |-> z }
+    -- 1<[2] ((y + (x * y)) * z):PNat --> (((x * y) * z) + (y * z)):PNat
+
+    -- 1>[3] rule: eq ((x * Y) * Z) = (x * (Y * Z))
+    --     { Y |-> y, Z |-> z }
+    -- 1<[3] ((x * y) * z):PNat --> (x * (y * z)):PNat
+
+    -- 1>[4] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> (y * z) }
+    -- 1<[4] (s(x) * (y * z)):PNat --> ((x * (y * z)) + (y * z)):PNat
+
+    -- 1>[5] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> ((y * z) + (x * (y * z))) }
+    -- 1<[5] (((y * z) + (x * (y * z))) = ((y * z) + (x * (y * z)))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 5 rewrites + 82 matches)
+close
+-- End of Proof of Theorem 3
+-- End of CafeOBJ Proof score
+
+-- ---------------------
+-- Commutativity of _*_
+-- ---------------------
+-- Theorem 4 [Commutativity of _*_ (comm*)]
+-- X * Y = Y * X
+-- Proof of Theorem 4 By structural induction on X.
+-- Let x,y be fresh constants of PNat.
+-- I. Base case
+-- What to show is 0 * y = y * 0.
+-- _0 * y_
+-- → 0  by(multi 1)
+-- We need the following lemma to make progress in the proof:
+-- X * 0 = 0 --(rz*)
+-- 
+-- y * 0
+-- → 0  by(rz*)
+-- 
+-- II. Induction case
+-- What to show is s(x) * y = y * s(x)
+-- assuming the induction hypothesis x * Y = Y * x --(IH)
+-- _s(x) * y_
+-- → (_x * y_) + y  by(multi 2)
+-- → (y * x) + y  by(IH)
+-- We need the following lemma to make progress in the proof:
+-- X * s(Y) = X * Y + X --(rs*)
+-- 
+-- _y * s(x)_
+-- → (y * x) + y  by(rs*)
+-- 
+-- End of Proof of Theorem 4
+-- 
+-- Lemma 4 [Right zero of _*_ (rz*)]
+-- X * 0 = 0
+-- Proof of Lemma 4 By structural induction on X.
+-- Let x be fresh constants of PNat.
+-- I. Base case
+-- What to show is 0 * 0 = 0.
+-- _0 * 0_
+-- → 0  by(multi 1)
+-- 
+-- II. Induction case
+-- What to show is s(x) * 0 = 0
+-- assuming the induction hypothesis x * 0 = 0 --(IH)
+-- _s(x) * 0_
+-- → (_x * 0_) + 0  by(multi 2)
+-- → 0 + 0  by(IH)
+-- → 0  by(multi 1)
+-- 
+-- End of Proof of Lemma 4
+-- 
+-- Lemma 5 [Right successor of _*_ (rs*)]
+-- X * s(Y) = X * Y + X
+-- Proof of Lemma 5 By structural induction on X.
+-- Let x,y be fresh constants of PNat.
+-- I. Base case
+-- What to show is 0 * s(y) = (0 * y) + 0.
+-- _0 * s(y)_
+-- → 0  by(multi 1)
+-- 
+-- _(0 * y)_ + 0
+-- → _0 + 0_  by(multi 1)
+-- → 0  by(add 1)
+-- 
+-- II. Induction case
+-- What to show is s(x) * s(y) = (s(x) * y) + s(x)
+-- assuming the induction hypothesis x * s(Y) = (x * Y) + x --(IH)
+-- _s(x) * s(y)_
+-- → ( _x * s(y)_ ) + s(y)  by(multi 2)
+-- → _((x * y) + x) + s(y)_  by(IH)
+-- → _s(y) + ((x * y) + x)  by(comm+)
+-- → s(y + ((x * y) + x))  by(add 2)
+-- 
+-- _(s(x) * y)_ + s(x)
+-- → _((x * y) + y) + s(x)_  by(multi 2)
+-- → _s(x) + ((x * y) + y)_  by(comm+)
+-- → s( _x + ((x * y) + y)_ )  by(add 2)
+-- → s( _(x * y) + y_ ) + x)  by(comm+)
+-- → s( _(y + (x * y)) + x_ )  by(comm+)
+-- → s(y + ((x * y) + x))  by(assoc+)
+-- 
+-- End of Proof of Lemma 5
+-- 
+-- Begin of CafeOBJ Proof score
+-- 
+-- Lemma 4 [Right zero of _*_ (rz*)]
+-- X * 0 = 0
+-- Proof of Lemma 4 By structural induction on X.
+-- I. Base case
+open PNAT2 .
+    -- check
+    red 0 * 0 = 0 .
+    -- reduce in %PNAT2 : ((0 * 0) = 0):Bool
+    -- 1>[1] rule: eq (0 * Y) = 0
+    --     { Y |-> 0 }
+    -- 1<[1] (0 * 0):PNat --> (0):PNat
+
+    -- 1>[2] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> 0 }
+    -- 1<[2] (0 = 0):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 2 rewrites + 4 matches)
+close
+-- II. Induction case
+open PNAT2 .
+    -- fresh constants
+    op x : -> PNat .
+    -- IH
+    eq x * 0 = 0 .
+    -- check
+    red s(x) * 0 = 0 .
+    -- reduce in %PNAT2 : ((s(x) * 0) = 0):Bool
+    -- 1>[1] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> 0 }
+    -- 1<[1] (s(x) * 0):PNat --> ((x * 0) + 0):PNat
+
+    -- 1>[2] rule: eq (x * 0) = 0
+    --     {}
+    -- 1<[2] (x * 0):PNat --> (0):PNat
+
+    -- 1>[3] rule: eq (0 + Y) = Y
+    --     { Y |-> 0 }
+    -- 1<[3] (0 + 0):PNat --> (0):PNat
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> 0 }
+    -- 1<[4] (0 = 0):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 8 matches)
+close
+-- End of Proof of Lemma 4
+-- 
+-- Lemma 5 [Right successor of _*_ (rs*)]
+-- X * s(Y) = (X * Y) + X
+-- Proof of Lemma 5 By structural induction on X.
+-- I. Base case
+open PNAT2 .
+    -- fresh constants
+    op y : -> PNat .
+    -- check
+    red 0 * s(y) = (0 * y) + 0 .
+    -- reduce in %PNAT2 : ((0 * s(y)) = ((0 * y) + 0)):Bool
+    -- 1>[1] rule: eq (0 * Y) = 0
+    --     { Y |-> s(y) }
+    -- 1<[1] (0 * s(y)):PNat --> (0):PNat
+
+    -- 1>[2] rule: eq (0 * Y) = 0
+    --     { Y |-> y }
+    -- 1<[2] (0 * y):PNat --> (0):PNat
+
+    -- 1>[3] rule: eq (0 + Y) = Y
+    --     { Y |-> 0 }
+    -- 1<[3] (0 + 0):PNat --> (0):PNat
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> 0 }
+    -- 1<[4] (0 = 0):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 4 rewrites + 6 matches)
+close
+-- II. Induction case
+open PNAT2 .
+    -- fresh constatns
+    ops x y : -> PNat .
+    -- IH
+    eq x * s(Y) = (x * Y) + x .
+    -- check
+    red s(x) * s(y) = (s(x) * y) + s(x) .
+    -- reduce in %PNAT2 : ((s(x) * s(y)) = ((s(x) * y) + s(x))):Bool
+    -- 1>[1] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> s(y) }
+    -- 1<[1] (s(x) * s(y)):PNat --> ((x * s(y)) + s(y)):PNat
+
+    -- 1>[2] rule: eq (x * s(Y)) = ((x * Y) + x)
+    --     { Y |-> y }
+    -- 1<[2] (x * s(y)):PNat --> ((x * y) + x):PNat
+
+    -- 1>[3] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> y, Y |-> ((x * y) + x) }
+    -- 1<[3] ((x + (x * y)) + s(y)):PNat --> (s((y + ((x * y) + x)))):PNat
+
+    -- 1>[4] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> y }
+    -- 1<[4] (s(x) * y):PNat --> ((x * y) + y):PNat
+
+    -- 1>[5] rule: eq (s(X) + Y) = s((X + Y))
+    --     { X |-> x, Y |-> ((x * y) + y) }
+    -- 1<[5] ((y + (x * y)) + s(x)):PNat --> (s((x + ((x * y) + y)))):PNat
+
+    -- 1>[6] rule: eq (s(X) = s(Y)) = (X = Y)
+    --     { Y |-> ((x * y) + (y + x)), X |-> ((x * y) + (x + y)) }
+    -- 1<[6] (s(((x * y) + (x + y))) = s(((x * y) + (y + x)))):Bool --> (((x * y) + (x + y)) = ((x * y) + (y + x))):Bool
+
+    -- 1>[7] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (x + (y + (x * y))) }
+    -- 1<[7] ((x + (y + (x * y))) = (y + (x + (x * y)))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 7 rewrites + 76 matches)
+close
+-- End of Proof of Lemma 5
+-- 
+-- Theorem 4 [Commutativity of _*_ (comm*)]
+-- X * Y = Y * X
+-- Proof of Theorem 4 By structural induction on X.
+-- I. Base case
+open PNAT2 .
+    -- fresh constants
+    op y : -> PNat .
+    -- lemmas
+    -- (rz*)
+    eq X * 0 = 0 .
+    -- check
+    red 0 * y = y * 0 .
+    -- reduce in %PNAT2 : ((0 * y) = (y * 0)):Bool
+    -- 1>[1] rule: eq (0 * Y) = 0
+    --     { Y |-> y }
+    -- 1<[1] (0 * y):PNat --> (0):PNat
+
+    -- 1>[2] rule: eq (X * 0) = 0
+    --     { X |-> y }
+    -- 1<[2] (y * 0):PNat --> (0):PNat
+
+    -- 1>[3] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> 0 }
+    -- 1<[3] (0 = 0):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 3 rewrites + 6 matches)
+close
+-- 
+-- II. Induction case
+open PNAT2 .
+    -- fresh constants
+    ops x y : -> PNat .
+    -- lemmas
+    -- (rs*)
+    eq X * s(Y) = (X * Y) + X .
+    -- IH
+    eq x * Y = Y * x .
+    -- check
+    red s(x) * y = y * s(x) .
+    -- reduce in %PNAT2 : ((s(x) * y) = (y * s(x))):Bool
+    -- 1>[1] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> y }
+    -- 1<[1] (s(x) * y):PNat --> ((x * y) + y):PNat
+
+    -- 1>[2] rule: eq (x * Y) = (Y * x)
+    --     { Y |-> y }
+    -- 1<[2] (x * y):PNat --> (y * x):PNat
+
+    -- 1>[3] rule: eq (X * s(Y)) = ((X * Y) + X)
+    --     { X |-> y, Y |-> x }
+    -- 1<[3] (y * s(x)):PNat --> ((y * x) + y):PNat
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (y + (y * x)) }
+    -- 1<[4] ((y + (y * x)) = (y + (y * x))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 4 rewrites + 26 matches)
+close
+-- End of Proof of Theorem 4
+-- End of CafeOBJ Proof score
+
+mod! PNAT3 {
+    [PNat]
+    op 0 : -> PNat {constr} .
+    op s : PNat -> PNat {constr} .
+    vars X Y Z : PNat .
+
+    eq (0 = s(Y)) = false .
+    eq (s(X) = s(Y)) = (X = Y) .
+
+    op _+_ : PNat PNat -> PNat {assoc comm} .
+    eq 0 + Y = Y .
+    eq s(X) + Y = s(X + Y) .
+
+    -- 이 부분이 PNAT2와 다름
+    op _*_ : PNat PNat -> PNat {assoc comm} .
+
+    eq 0 * Y = 0 .
+    eq s(X) * Y = (X * Y) + Y .
+    
+    op fact1 : PNat -> PNat .
+    eq fact1(0) = s(0) . 
+    eq fact1(s(X)) = s(X) * fact1(X) . 
+
+    op fact2 : PNat -> PNat .
+    op sfact2 : PNat PNat -> PNat .
+    
+    eq fact2(X) = sfact2(X,s(0)) . 
+    eq sfact2(0,Y) = Y .
+    eq sfact2(s(X),Y) = sfact2(X,s(X) * Y) .
+}
+
+-- -----------------------------------------
+-- Correctness of a Tail Recursive Factorial
+-- -----------------------------------------
+-- Theorem 5 [Correctness of a Tail Recursive Factorial (trf)]
+-- fact1(X) = fact2(X)
+-- Proof of Theorem 5 By structural induction on X.
+-- Let x be fresh constants of PNat.
+-- I. Base case
+-- What to show is fact1(0) = fact2(0).
+-- 
+-- fact1(0)
+-- → s(0)  by(f1-1)
+-- fact2(0)
+-- → sfact2(0, s(0))  by(f2)
+-- → s(0)  by(sf2-1)
+-- 
+-- II. Induction case
+-- What to show is fact1(s(x)) = fact2(s(x)) 
+-- assuming the induction hypothesis fact1(x) = fact2(x) -- (IH)
+-- _fact1(s(x))_
+-- → s(x) * _fact1(x)_  by(f1-2)
+-- → s(x) * _fact2(x)_  by(IH)
+-- → s(x) * sfact2(x,s(0))  by(f2)
+-- 
+-- _fact2(s(x))_
+-- → _sfact2(s(x),s(0))_  by(f2)
+-- sfact2(x, s(x) * s(0))  by(sf2-2)
+-- We cannot make the two terms equal only by rewriting, and need a lemma.
+-- The following is one candidate:
+-- s(X) * sfact2(X,s(0)) = sfact2(X,s(X) * s(0))
+-- This is so specific that the proof of this lemma needs another lemma.
+-- Therefore, we make it more generic as follows:
+-- Y * sfact2(X,Z) = sfact2(X,Y * Z)  -- (p-sf2)
+-- _s(x) * sfact2(x,s(0))_
+-- → sfact2(x,s(x) * s(0))  by(p-sf2)
+-- 
+-- End of Proof of Theorem 5
+-- 
+-- Begin of CafeOBJ Proof score
+-- 
+-- Lemma 6 [Property of sfact2 (p‐sf2)]
+-- Y * sfact2(X,Z) = sfact2(X,Y * Z)
+-- Proof of Lemma6 By structural induction on X.
+-- Let x,y,z be fresh constants of PNat.
+-- I. Base case
+-- What to show is y * sfact2(0,z) = sfact2(0,y * z).
+-- y * _sfact2(0,z)_
+-- → y * z  by(sf2-1)
+-- 
+-- _sfact2(0,y * z)_
+-- → y * z  by(sf2-1)
+-- 
+-- II. Induction case
+-- What to show is y * sfact2(s(x),z) = sfact2(s(x),y * z)
+-- assuming the induction hypothesis
+-- Y * sfact2(x,Z) = sfact2(x,Y * Z) -- (IH)
+-- 
+-- y * _sfact2(s(x),z)_
+-- → _y * sfact2(x,s(x) * z)_  by(sf2-2)
+-- → sfact2(x.y * (s(x) * z))  by(IH)
+-- 
+-- sfact2(s(x),y * z)
+-- → sfact2(x,s(x) * (y * z))  by(sf2-2)
+-- → sfact2(x,(s(x) * y) * z)  by(assoc*)
+-- → sfact2(x,(y * s(x)) * z)  by(comm*)
+-- → sfact2(x,y * (s(x) * z))  by(assoc*)
+-- 
+-- End of Proof of Lemma 6
+-- 
+-- Begin of CafeOBJ Proof score
+-- 
+-- Lemma 6 [Property of sfact2 (p‐sf2)]
+-- Y * sfact2(X,Z) = sfact2(X,Y * Z)
+-- Proof of Lemma6 By structural induction on X.
+-- I. Base case
+open PNAT3 .
+    -- fresh constants
+    ops y z : -> PNat .
+    -- check
+    red y * sfact2(0,z) = sfact2(0,y * z) .
+    -- reduce in %PNAT3 : ((y * sfact2(0,z)) = sfact2(0,(y * z))):Bool
+    -- 1>[1] rule: eq sfact2(0,Y) = Y
+    --     { Y |-> z }
+    -- 1<[1] (sfact2(0,z)):PNat --> (z):PNat
+
+    -- 1>[2] rule: eq sfact2(0,Y) = Y
+    --     { Y |-> (y * z) }
+    -- 1<[2] (sfact2(0,(y * z))):PNat --> (y * z):PNat
+
+    -- 1>[3] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (z * y) }
+    -- 1<[3] ((z * y) = (z * y)):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 3 rewrites + 13 matches)
+close
+-- II. Induction case
+open PNAT3 .
+    -- fresh constants
+    ops x y z : -> PNat .
+    -- lemmas -- (d*o+) Note that we need to use the lemma that was not used in the manual proof.
+    eq (X + Y) * Z = (X * Z) + (Y * Z) .
+    -- IH
+    eq Y * sfact2(x,Z) = sfact2(x,Y * Z) .
+    -- check
+    red y * sfact2(s(x),z) = sfact2(s(x),y * z) .
+    -- reduce in %PNAT3 : ((y * sfact2(s(x),z)) = sfact2(s(x),(y * z))):Bool
+    -- 1>[1] rule: eq sfact2(s(X),Y) = sfact2(X,(s(X) * Y))
+    --     { X |-> x, Y |-> z }
+    -- 1<[1] (sfact2(s(x),z)):PNat --> (sfact2(x,(s(x) * z))):PNat
+
+    -- 1>[2] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> z }
+    -- 1<[2] (s(x) * z):PNat --> ((x * z) + z):PNat
+
+    -- 1>[3] rule: eq (Y * sfact2(x,Z)) = sfact2(x,(Y * Z))
+    --     { Z |-> (z + (z * x)), Y |-> y }
+    -- 1<[3] (y * sfact2(x,(z + (z * x)))):PNat --> (sfact2(x,(y * (z + (z * x))))):PNat
+
+    -- 1>[4] rule: eq ((X + Y) * Z) = ((X * Z) + (Y * Z))
+    --     { Y |-> z, X |-> (x * z), Z |-> y }
+    -- 1<[4] (y * ((x * z) + z)):PNat --> (((x * z) * y) + (z * y)):PNat
+
+    -- 1>[5] rule: eq sfact2(s(X),Y) = sfact2(X,(s(X) * Y))
+    --     { X |-> x, Y |-> (y * z) }
+    -- 1<[5] (sfact2(s(x),(y * z))):PNat --> (sfact2(x,(s(x) * (y * z)))):PNat
+
+    -- 1>[6] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> x, Y |-> (z * y) }
+    -- 1<[6] (s(x) * (z * y)):PNat --> ((x * (z * y)) + (z * y)):PNat
+
+    -- 1>[7] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> sfact2(x,((y * z) + (y * (x * z)))) }
+    -- 1<[7] (sfact2(x,((y * z) + (y * (x * z)))) = sfact2(x,((y * z) + (z * (y * x))))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 7 rewrites + 117 matches)
+close
+-- End of Proof of Lemma 6
+-- 
+-- Theorem 5 [Correctness of a Tail Recursive Factorial (trf)]
+-- fact1(X) = fact2(X)
+-- Proof of Theorem 5 By structural induction on X.
+-- I. Base case
+open PNAT3 .
+    -- fresh constants
+    op x : -> PNat .
+    -- check
+    red fact1(0) = fact2(0) .
+    -- reduce in %PNAT3 : (fact1(0) = fact2(0)):Bool
+    -- 1>[1] rule: eq fact1(0) = s(0)
+    --     {}
+    -- 1<[1] (fact1(0)):PNat --> (s(0)):PNat
+
+    -- 1>[2] rule: eq fact2(X) = sfact2(X,s(0))
+    --     { X |-> 0 }
+    -- 1<[2] (fact2(0)):PNat --> (sfact2(0,s(0))):PNat
+
+    -- 1>[3] rule: eq sfact2(0,Y) = Y
+    --     { Y |-> s(0) }
+    -- 1<[3] (sfact2(0,s(0))):PNat --> (s(0)):PNat
+
+    -- 1>[4] rule: eq (s(X) = s(Y)) = (X = Y)
+    --     { Y |-> 0, X |-> 0 }
+    -- 1<[4] (s(0) = s(0)):Bool --> (0 = 0):Bool
+
+    -- 1>[5] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> 0 }
+    -- 1<[5] (0 = 0):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 5 rewrites + 8 matches)
+close
+-- II. Induction case
+open PNAT3 .
+    -- fresh constants
+    op x : -> PNat .
+    -- lemmas --(sf2-p)
+    eq Y * sfact2(X,Z) = sfact2(X,Y * Z) .
+    -- IH
+    eq fact1(x) = fact2(x) .
+    -- check
+    red fact1(s(x)) = fact2(s(x)) .
+    -- reduce in %PNAT3 : (fact1(s(x)) = fact2(s(x))):Bool
+    -- 1>[1] rule: eq fact1(s(X)) = (s(X) * fact1(X))
+    --     { X |-> x }
+    -- 1<[1] (fact1(s(x))):PNat --> (s(x) * fact1(x)):PNat
+
+    -- 1>[2] rule: eq fact1(x) = fact2(x)
+    --     {}
+    -- 1<[2] (fact1(x)):PNat --> (fact2(x)):PNat
+
+    -- 1>[3] rule: eq fact2(X) = sfact2(X,s(0))
+    --     { X |-> x }
+    -- 1<[3] (fact2(x)):PNat --> (sfact2(x,s(0))):PNat
+
+    -- 1>[4] rule: eq (Y * sfact2(X,Z)) = sfact2(X,(Y * Z))
+    --     { X |-> x, Z |-> s(0), Y |-> s(x) }
+    -- 1<[4] (s(x) * sfact2(x,s(0))):PNat --> (sfact2(x,(s(x) * s(0)))):PNat
+
+    -- 1>[5] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> 0, Y |-> s(x) }
+    -- 1<[5] (s(x) * s(0)):PNat --> ((0 * s(x)) + s(x)):PNat
+
+    -- 1>[6] rule: eq (0 * Y) = 0
+    --     { Y |-> s(x) }
+    -- 1<[6] (0 * s(x)):PNat --> (0):PNat
+
+    -- 1>[7] rule: eq (0 + Y) = Y
+    --     { Y |-> s(x) }
+    -- 1<[7] (0 + s(x)):PNat --> (s(x)):PNat
+
+    -- 1>[8] rule: eq fact2(X) = sfact2(X,s(0))
+    --     { X |-> s(x) }
+    -- 1<[8] (fact2(s(x))):PNat --> (sfact2(s(x),s(0))):PNat
+
+    -- 1>[9] rule: eq sfact2(s(X),Y) = sfact2(X,(s(X) * Y))
+    --     { X |-> x, Y |-> s(0) }
+    -- 1<[9] (sfact2(s(x),s(0))):PNat --> (sfact2(x,(s(x) * s(0)))):PNat
+
+    -- 1>[10] rule: eq (s(X) * Y) = ((X * Y) + Y)
+    --     { X |-> 0, Y |-> s(x) }
+    -- 1<[10] (s(x) * s(0)):PNat --> ((0 * s(x)) + s(x)):PNat
+
+    -- 1>[11] rule: eq (0 * Y) = 0
+    --     { Y |-> s(x) }
+    -- 1<[11] (0 * s(x)):PNat --> (0):PNat
+
+    -- 1>[12] rule: eq (0 + Y) = Y
+    --     { Y |-> s(x) }
+    -- 1<[12] (0 + s(x)):PNat --> (s(x)):PNat
+
+    -- 1>[13] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> sfact2(x,s(x)) }
+    -- 1<[13] (sfact2(x,s(x)) = sfact2(x,s(x))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 13 rewrites + 42 matches)
+close
+-- End of Proof of Theorem 5
+-- End of CafeOBJ Proof score
