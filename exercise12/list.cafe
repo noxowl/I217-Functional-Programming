@@ -1,0 +1,676 @@
+mod! LIST1(E :: TRIV) {
+    [List]
+    op nil : -> List {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+
+    vars E E2 : Elt.E .
+    vars L1 L2 L3 : List .
+    
+    -- prepared in the built‐in module EQL
+    -- op _=_ : S S -> Bool {comm} .
+    -- eq (X = X) = true .
+    -- eq (true = false) = false .
+    -- 
+    eq (nil = E | L1) = false .
+    eq (E | L1 = E2 | L2) = (E = E2) and (L1 = L2) .
+
+    -- 
+    op _@_ : List List -> List .
+    -- (@1)
+    eq nil @ L2 = L2 .
+    -- (@2)
+    eq (E | L1) @ L2 = E | (L1 @ L2) .
+    -- _(e1 | e2 | nil) @ (e3 | e4 | nil)_
+    -- → e1|( _(e2|nil)@(e3|e4|nil)_ )  by(@2)
+    -- → e1 | e2 | ( _nil @ (e3 | e4 | nil)_ )  by(@2)
+    -- → e1 | e2 | e3 | e4 | nil  by(@1)
+    -- 
+    op rev1 : List -> List .
+    -- (r1-1)
+    eq rev1(nil) = nil .
+    -- (r1-2)
+    eq rev1(E | L1) = rev1(L1) @ (E | nil) .
+    -- _rev1(e1 | e2 | e3 | nil)_
+    -- → _rev1(e2 | e3 | nil)_ @ (e1 | nil)  by(rl-2)
+    -- → ( _rev1(e3 | nil)_ @ (e2 | nil)) @ (e1 | nil)  by(rl-2)
+    -- → (( _rev1(nil)_ @ (e3 | nil)) @ (e2 | nil)) @ (e1 | nil)  by(rl-2)
+    -- → (( _nil @ (e3 | nil)_ ) @ (e2 | nil)) @ (e1 | nil)  by(rl-1)
+    -- → ( _(e3 | nil) @ (e2 | nil)_ ) @ (e1 | nil)  by(@2)
+    -- → (e3 | _(nil @ (e2 | nil)_ )) @ (e1 | nil)  by(@2)
+    -- → _(e3 | e2 | nil) @ (e1 | nil)_  by(@1)
+    -- → e3 | ( _(e2 | nil) @ (e1 | nil)_ )  by(@2)
+    -- → e3 | e2 | ( _nil @ (e1 | nil)_ )  by(@2)
+    -- → e3 | e2 | e1 | nil  by(@1)
+    -- 
+    op rev2 : List -> List .
+    op sr2 : List List -> List .
+    -- (r2)
+    eq rev2(L1) = sr2(L1, nil) .
+    -- (sr2-1)
+    eq sr2(nil, L2) = L2 .
+    -- (sr2-2)
+    eq sr2(E | L1, L2) = sr2(L1, E | L2) .
+    -- rev2(e1 | e2 | e3 | nil)
+    -- → sr2(e1 |e2 | e3 | nil, nil)  by(r2)
+    -- → sr2(e2 | e3 | nil, e1 | nil)  by(sr2-2)
+    -- → sr2(e3 | nil, e2 | e1 | nil)  by(sr2-2)
+    -- → sr2(nil, e3 | e2 | e1 | nil)  by(sr2-2)
+    -- → e3 | e2 | e1 | nil  by(sr2-1)
+}
+
+-- set trace on
+-- Associativity of _@_
+-- 
+-- (L1 @ L2) @ L3 equals L1 @ (L2 @ L3) for lists L1,L2,L3.
+-- This is what we will prove by structural induction on L1.
+-- Theorem 1 [Associativity of _@_ (assoc@)]
+-- (L1 @ L2) @ L3 = L1 @ (L2 @ L3)
+-- 
+-- Proof of Theorem 1 By structural induction on L1.
+-- Let e be a fresh constant of Elt.E, l1,l2,l3 be fresh constants of List.
+-- I. Base case
+-- What to show is (nil @ l2) @ l3 = nil @ (l2 @ l3)
+-- ( _nil @ l2_ ) @ l3 → l2 @ l3  by(@1)
+-- _nil @ (l2) @ l3)_ → l2 @ l3  by(@1)
+-- 
+-- II. Induction case
+-- What to show is ((e | l1) @ l2) @ l3 = (e | l1) @ (l2 @ l3)
+-- assuming the induction hypothesis
+-- (l1 @ L2) @ L3 = l1 @ (L2 @ L3) --(IH)
+-- 
+-- ( _(e | l1) @ l2_ ) @ l3
+-- → _(e | (l1 @ l2)) @ l3_  by(@2)
+-- → e | ( _(l1 @ l2) @ l3_ )  by(@2)
+-- → e | (l1 @ (l2 @ l3))  by(IH)
+-- 
+-- _(e | l1) @ (l2 @ l3)_
+-- → e | (l1 @ (l2 @ l3))  by(@2)
+-- 
+-- End of Proof of Theorem 1
+
+-- Proof score by CafeOBJ system
+-- Theorem 1 [Associativity of _@_ (assoc@)]
+-- (L1 @ L2) @ L3 = L1 @ (L2 @ L3)
+-- Proof of Theorem 1 By structural induction on L1.
+-- I. Base case
+open LIST1 .
+    -- fresh constants
+    ops l2 l3 : -> List .
+    -- check
+    red (nil @ l2) @ l3 = nil @ (l2 @ l3) .
+    -- reduce in %LIST1(E) : (((nil @ l2) @ l3) = (nil @ (l2 @ l3))):Bool
+    -- 1>[1] rule: eq (nil @ L2) = L2
+    --     { L2 |-> l2 }
+    -- 1<[1] (nil @ l2):List --> (l2):List
+
+    -- 1>[2] rule: eq (nil @ L2) = L2
+    --     { L2 |-> (l2 @ l3) }
+    -- 1<[2] (nil @ (l2 @ l3)):List --> (l2 @ l3):List
+
+    -- 1>[3] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (l2 @ l3) }
+    -- 1<[3] ((l2 @ l3) = (l2 @ l3)):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 3 rewrites + 13 matches)
+close
+--
+-- II. Induction case
+open LIST1 .
+    -- fresh constants
+    ops l1 l2 l3 : -> List .
+    op e : -> Elt.E .
+    -- induction hypothesis
+    eq (l1 @ L2) @ L3 = l1 @ (L2 @ L3) .
+    -- check
+    red ((e | l1) @ l2) @ l3 = (e | l1) @ (l2 @ l3) .
+    -- reduce in %LIST1(E) : ((((e | l1) @ l2) @ l3) = ((e | l1) @ (l2 @ l3))):Bool
+    -- 1>[1] rule: eq ((E | L1) @ L2) = (E | (L1 @ L2))
+    --     { E |-> e, L2 |-> l2, L1 |-> l1 }
+    -- 1<[1] ((e | l1) @ l2):List --> (e | (l1 @ l2)):List
+
+    -- 1>[2] rule: eq ((E | L1) @ L2) = (E | (L1 @ L2))
+    --     { E |-> e, L2 |-> l3, L1 |-> (l1 @ l2) }
+    -- 1<[2] ((e | (l1 @ l2)) @ l3):List --> (e | ((l1 @ l2) @ l3)):List
+
+    -- 1>[3] rule: eq ((l1 @ L2) @ L3) = (l1 @ (L2 @ L3))
+    --     { L2 |-> l2, L3 |-> l3 }
+    -- 1<[3] ((l1 @ l2) @ l3):List --> (l1 @ (l2 @ l3)):List
+
+    -- 1>[4] rule: eq ((E | L1) @ L2) = (E | (L1 @ L2))
+    --     { E |-> e, L2 |-> (l2 @ l3), L1 |-> l1 }
+    -- 1<[4] ((e | l1) @ (l2 @ l3)):List --> (e | (l1 @ (l2 @ l3))):List
+
+    -- 1>[5] rule: eq ((E | L1) = (E2 | L2)) = ((E = E2) and (L1 = L2))
+    --     { E2 |-> e, L2 |-> (l1 @ (l2 @ l3)), E |-> e, L1 |-> (l1 @ (l2 @ l3)) }
+    -- 1<[5] ((e | (l1 @ (l2 @ l3))) = (e | (l1 @ (l2 @ l3)))):Bool --> ((e = e) and ((l1 @ (l2 @ l3)) = (l1 @ (l2 @ l3)))):Bool
+
+    -- 1>[6] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> e }
+    -- 1<[6] (e = e):Bool --> (true):Bool
+
+    -- 1>[7] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (l1 @ (l2 @ l3)) }
+    -- 1<[7] ((l1 @ (l2 @ l3)) = (l1 @ (l2 @ l3))):Bool --> (true):Bool
+
+    -- 1>[8] rule: eq (true and A:Bool) = A
+    --     { A:Bool |-> true }
+    -- 1<[8] (true and true):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0005 sec for 8 rewrites + 81 matches)
+close
+-- End of Proof of Theorem 1
+
+
+mod! LIST2(E :: TRIV) {
+    [List]
+    op nil : -> List {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+
+    vars E E2 : Elt.E .
+    vars L1 L2 L3 : List .
+    
+    eq (nil = E | L1) = false .
+    eq (E | L1 = E2 | L2) = (E = E2) and (L1 = L2) .
+
+    op _@_ : List List -> List {assoc} .
+    eq nil @ L2 = L2 .
+    eq (E | L1) @ L2 = E | (L1 @ L2) .
+
+    op rev1 : List -> List .
+    eq rev1(nil) = nil .
+    eq rev1(E | L1) = rev1(L1) @ (E | nil) .
+
+    op rev2 : List -> List .
+    op sr2 : List List -> List .
+    eq rev2(L1) = sr2(L1, nil) .
+    eq sr2(nil, L2) = L2 .
+    eq sr2(E | L1, L2) = sr2(L1, E | L2) .
+}
+
+-- Correctness of a Tail Recursive Reverse
+-- Theorem 2 [Correctness of a tail recursive reverse (ctrr)]
+-- rev1(L1) = rev2(L1)
+-- 
+-- Proof of Theorem 2 By structural induction on L1.
+-- Let e be a fresh constant of Elt.E, l1 be a fresh constant of List.
+-- I. Base case
+-- What to show is rev1(nil) = rev2(nil).
+-- _rev1(nil)_
+-- → nil  by(r1-1)
+-- 
+-- _rev2(nil)_
+-- → _sr2(nil, nil)_  by(r2)
+-- → nil  by(sr2-1)
+-- 
+-- II. Induction case
+-- What to show is rev1(e | l1) = rev2(e | l1)
+-- assuming the induction hypothesis
+-- rev1(l1) = rev2(l1) -- (IH)
+-- 
+-- _rev1(e | l1)_
+-- → _rev1(l1)_ @ (e | nil)  by(r1-2)
+-- → _rev2(l1)_ @ (e | nil)  by(IH)
+-- → sr2(l1,nil) @ (e | nil)  by(r2)
+-- 
+-- _rev2(e | l1)_
+-- → _sr2(e | l1, nil)_  by(r2)
+-- → sr2(l1,e | nil)  by(r2-2)
+-- Both sr2(l1,nil) @ (e | nil) and sr2(l1,e | nil) cannot be rewritten any more,
+-- and then we need a lemma. One possible candidate is as follows:
+-- sr2(L1,E | nil) = sr2(L1,nil) @ (E | nil)
+-- However, this seems too specific. Therefore, we make it more generic:
+-- sr2(L1,E2 | L2) = sr2(L1,nil) @ (E2 | L2)  -- (p-sr2)
+-- 
+-- sr2(l1,e | nil)
+-- → sr2(l1,nil) @ (e | nil)  by(p-sr2)
+-- 
+-- End of Proof of Theorem 2
+--
+-- Theorem 2 [Correctness of a tail recursive reverse (ctrr)]
+-- rev1(L1) = rev2(L1)
+-- 
+-- Proof of Theorem 2 By structural induction on L1.
+-- I. Base case
+open LIST2 .
+    -- check
+    red rev1(nil) = rev2(nil) .
+    -- reduce in %LIST2(E) : (rev1(nil) = rev2(nil)):Bool
+    -- 1>[1] rule: eq rev1(nil) = nil
+    --     {}
+    -- 1<[1] (rev1(nil)):List --> (nil):List
+
+    -- 1>[2] rule: eq rev2(L1) = sr2(L1,nil)
+    --     { L1 |-> nil }
+    -- 1<[2] (rev2(nil)):List --> (sr2(nil,nil)):List
+
+    -- 1>[3] rule: eq sr2(nil,L2) = L2
+    --     { L2 |-> nil }
+    -- 1<[3] (sr2(nil,nil)):List --> (nil):List
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> nil }
+    -- 1<[4] (nil = nil):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 4 rewrites + 6 matches)
+close
+-- 
+-- II. Induction case
+open LIST2 .
+    -- fresh constants
+    op l1 : -> List .
+    op e : -> Elt.E .
+    -- induction hypothesis
+    eq rev1(l1) = rev2(l1) .
+    -- lemmas
+    eq sr2(L1,E2 | L2) = sr2(L1,nil) @ (E2 | L2) .
+    -- check
+    red rev1(e | l1) = rev2(e | l1) .
+    -- reduce in %LIST2(E) : (rev1((e | l1)) = rev2((e | l1))):Bool
+    -- 1>[1] rule: eq rev1((E | L1)) = (rev1(L1) @ (E | nil))
+    --     { E |-> e, L1 |-> l1 }
+    -- 1<[1] (rev1((e | l1))):List --> (rev1(l1) @ (e | nil)):List
+
+    -- 1>[2] rule: eq rev1(l1) = rev2(l1)
+    --     {}
+    -- 1<[2] (rev1(l1)):List --> (rev2(l1)):List
+
+    -- 1>[3] rule: eq rev2(L1) = sr2(L1,nil)
+    --     { L1 |-> l1 }
+    -- 1<[3] (rev2(l1)):List --> (sr2(l1,nil)):List
+
+    -- 1>[4] rule: eq rev2(L1) = sr2(L1,nil)
+    --     { L1 |-> (e | l1) }
+    -- 1<[4] (rev2((e | l1))):List --> (sr2((e | l1),nil)):List
+
+    -- 1>[5] rule: eq sr2((E | L1),L2) = sr2(L1,(E | L2))
+    --     { E |-> e, L2 |-> nil, L1 |-> l1 }
+    -- 1<[5] (sr2((e | l1),nil)):List --> (sr2(l1,(e | nil))):List
+
+    -- 1>[6] rule: eq sr2(L1,(E2 | L2)) = (sr2(L1,nil) @ (E2 | L2))
+    --     { L1 |-> l1, L2 |-> nil, E2 |-> e }
+    -- 1<[6] (sr2(l1,(e | nil))):List --> (sr2(l1,nil) @ (e | nil)):List
+
+    -- 1>[7] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (sr2(l1,nil) @ (e | nil)) }
+    -- 1<[7] ((sr2(l1,nil) @ (e | nil)) = (sr2(l1,nil) @ (e | nil))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0003 sec for 7 rewrites + 35 matches)
+close
+-- 
+-- End of Proof of Theorem 2
+
+
+-- Lemma 1 [A property of sr2 (p-sr2)]
+-- sr2(L1,E2 | L2) = sr2(L1,nil) @ (E2 | L2)
+-- Proof of Lemma 1 By structural induction on L1.
+-- Let e,e2 be fresh constants of Elt.E, l1,l2 be fresh constants of List.
+-- I. Base case
+-- What to show is sr2(nil,e2 | l2) = sr2(nil,nil) @ (e2 | l2).
+-- 
+-- sr2(nil,e2 | l2)
+-- → e2 | l2  by(sr2-1)
+-- 
+-- sr2(nil,nil) @ (e2 | l2)
+-- → nil @ (e2 | l2)  by(sr2-1)
+-- → e2 | l2  by(@1)
+-- 
+-- II. Induction case
+-- What to show is sr2(e | l1,e2 | l2) = sr2(e | l1,nil) @ (e2 | l2)
+-- assuming the induction hypothesis
+-- sr2(l1,E2 | L2) = sr2(l1,nil) @ (E2 | L2) -- (IH)
+-- _sr2(e | l1,e2 | l2)_
+-- → _sr2(l1, e | e2 | l2)_  by(sr2-2)
+-- → sr2(l1, nil) @ (e | e2 | l2)  by(IH)
+-- 
+-- _sr2(e | l1, nil)_ @ (e2 | l2)
+-- → _sr2(l1, e | nil)_ @ (e2 | l2)  by(sr2-2)
+-- → _(sr2(l1,nil) @ (e | nil)) @ (e2 | l2)_  by(IH)
+-- → sr2(l1,nil) @ ( _(e | nil) @ (e2 | l2)_ )  by(assoc@)
+-- → sr2(l1,nil) @ (e | _(nil @ (e2 | l2)_ )  by(@2)
+-- → sr2(l1,nil) @ (e | e2 | l2)  by(@1)
+-- 
+-- End of Proof of Lemma 1
+--
+-- Lemma 1 [A property of sr2 (p-sr2)]
+-- sr2(L1,E2 | L2) = sr2(L1,nil) @ (E2 | L2)
+-- Proof of Lemma 1 By structural induction on L1.
+-- I. Base case
+open LIST2 .
+    -- fresh constants
+    op l2 : -> List .
+    op e2 : -> Elt.E .
+    -- check
+    red sr2(nil,e2 | l2) = sr2(nil,nil) @ (e2 | l2) .
+    -- reduce in %LIST2(E) : (sr2(nil,(e2 | l2)) = (sr2(nil,nil) @ (e2 | l2))):Bool
+    -- 1>[1] rule: eq sr2(nil,L2) = L2
+    --     { L2 |-> (e2 | l2) }
+    -- 1<[1] (sr2(nil,(e2 | l2))):List --> (e2 | l2):List
+
+    -- 1>[2] rule: eq sr2(nil,L2) = L2
+    --     { L2 |-> nil }
+    -- 1<[2] (sr2(nil,nil)):List --> (nil):List
+
+    -- 1>[3] rule: eq (nil @ L2) = L2
+    --     { L2 |-> (e2 | l2) }
+    -- 1<[3] (nil @ (e2 | l2)):List --> (e2 | l2):List
+
+    -- 1>[4] rule: eq ((E | L1) = (E2 | L2)) = ((E = E2) and (L1 = L2))
+    --     { E2 |-> e2, L2 |-> l2, E |-> e2, L1 |-> l2 }
+    -- 1<[4] ((e2 | l2) = (e2 | l2)):Bool --> ((e2 = e2) and (l2 = l2)):Bool
+
+    -- 1>[5] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> e2 }
+    -- 1<[5] (e2 = e2):Bool --> (true):Bool
+
+    -- 1>[6] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> l2 }
+    -- 1<[6] (l2 = l2):Bool --> (true):Bool
+
+    -- 1>[7] rule: eq (true and A:Bool) = A
+    --     { A:Bool |-> true }
+    -- 1<[7] (true and true):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0002 sec for 7 rewrites + 14 matches)
+close
+-- 
+-- II. Induction case
+open LIST2 .
+    -- fresh constants
+    ops l1 l2 : -> List .
+    ops e e2 : -> Elt.E .
+    -- induction hypothesis
+    eq sr2(l1, E2 | L2) = sr2(l1,nil) @ (E2 | L2) .
+    -- check
+    red sr2(e | l1,e2 | l2) = sr2(e | l1,nil) @ (e2 | l2) .
+    -- reduce in %LIST2(E) : (sr2((e | l1),(e2 | l2)) = (sr2((e | l1),nil) @ (e2 | l2))):Bool
+    -- 1>[1] rule: eq sr2((E | L1),L2) = sr2(L1,(E | L2))
+    --     { E |-> e, L2 |-> (e2 | l2), L1 |-> l1 }
+    -- 1<[1] (sr2((e | l1),(e2 | l2))):List --> (sr2(l1,(e | (e2 | l2)))):List
+
+    -- 1>[2] rule: eq sr2(l1,(E2 | L2)) = (sr2(l1,nil) @ (E2 | L2))
+    --     { E2 |-> e, L2 |-> (e2 | l2) }
+    -- 1<[2] (sr2(l1,(e | (e2 | l2)))):List --> (sr2(l1,nil) @ (e | (e2 | l2))):List
+
+    -- 1>[3] rule: eq sr2((E | L1),L2) = sr2(L1,(E | L2))
+    --     { E |-> e, L2 |-> nil, L1 |-> l1 }
+    -- 1<[3] (sr2((e | l1),nil)):List --> (sr2(l1,(e | nil))):List
+
+    -- 1>[4] rule: eq sr2(l1,(E2 | L2)) = (sr2(l1,nil) @ (E2 | L2))
+    --     { E2 |-> e, L2 |-> nil }
+    -- 1<[4] (sr2(l1,(e | nil))):List --> (sr2(l1,nil) @ (e | nil)):List
+
+    -- 1>[5] rule: eq (A1:*Cosmos* @ ((E | L1) @ L2)) = (A1 @ (E | (L1 @ L2)))
+    --     { E |-> e, L1 |-> nil, A1:*Cosmos* |-> sr2(l1,nil), L2 |-> (e2 | l2) }
+    -- 1<[5] ((sr2(l1,nil) @ (e | nil)) @ (e2 | l2)):List --> (sr2(l1,nil) @ (e | (nil @ (e2 | l2)))):List
+
+    -- 1>[6] rule: eq (nil @ L2) = L2
+    --     { L2 |-> (e2 | l2) }
+    -- 1<[6] (nil @ (e2 | l2)):List --> (e2 | l2):List
+
+    -- 1>[7] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (sr2(l1,nil) @ (e | (e2 | l2))) }
+    -- 1<[7] ((sr2(l1,nil) @ (e | (e2 | l2))) = (sr2(l1,nil) @ (e | (e2 | l2)))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0001 sec for parse, 0.0003 sec for 7 rewrites + 53 matches)
+close
+-- 
+-- End of Proof of Lemma 1
+
+
+mod! LIST3(E :: TRIV) {
+    [List]
+    op nil : -> List {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+
+    vars E E2 : Elt.E .
+    vars L L1 L2 L3 : List .
+    
+    eq (nil = E | L1) = false .
+    eq (E | L1 = E2 | L2) = (E = E2) and (L1 = L2) .
+
+    op _@_ : List List -> List {assoc} .
+    eq nil @ L2 = L2 .
+    eq (E | L1) @ L2 = E | (L1 @ L2) .
+
+    op rev1 : List -> List .
+    eq rev1(nil) = nil .
+    eq rev1(E | L1) = rev1(L1) @ (E | nil) .
+
+    op rev2 : List -> List .
+    op sr2 : List List -> List .
+    eq rev2(L1) = sr2(L1, nil) .
+    eq sr2(nil, L2) = L2 .
+    eq sr2(E | L1, L2) = sr2(L1, E | L2) .
+}
+
+-- Theorem 3 [Overlapped reverse (ovr)]
+-- rev1(rev1(L)) = L
+-- Proof of Theorem 3 By structural induction on L.
+-- I. Base case
+open LIST3 .
+    -- check
+    red rev1(rev1(nil)) = nil .
+    -- reduce in %LIST3(E) : (rev1(rev1(nil)) = nil):Bool
+    -- 1>[1] rule: eq rev1(nil) = nil
+    --     {}
+    -- 1<[1] (rev1(nil)):List --> (nil):List
+
+    -- 1>[2] rule: eq rev1(nil) = nil
+    --     {}
+    -- 1<[2] (rev1(nil)):List --> (nil):List
+
+    -- 1>[3] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> nil }
+    -- 1<[3] (nil = nil):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 3 rewrites + 5 matches)
+close
+-- II. Induction case
+open LIST3 .
+    -- fresh constants
+    op e : -> Elt.E .
+    op l : -> List .
+    -- induction hypothesis
+    eq rev1(rev1(l)) = l .
+    -- lemmas
+    eq rev1(rev1(L1) @ L2) = rev1(L2) @ L1 .
+    eq L @ nil = L .
+    -- check
+    red rev1(rev1(e | l)) = (e | l) .
+    -- reduce in %LIST3(E) : (rev1(rev1((e | l))) = (e | l)):Bool
+    -- 1>[1] rule: eq rev1((E | L1)) = (rev1(L1) @ (E | nil))
+    --     { E |-> e, L1 |-> l }
+    -- 1<[1] (rev1((e | l))):List --> (rev1(l) @ (e | nil)):List
+
+    -- 1>[2] rule: eq rev1((rev1(L1) @ L2)) = (rev1(L2) @ L1)
+    --     { L1 |-> l, L2 |-> (e | nil) }
+    -- 1<[2] (rev1((rev1(l) @ (e | nil)))):List --> (rev1((e | nil)) @ l):List
+
+    -- 1>[3] rule: eq rev1((E | L1)) = (rev1(L1) @ (E | nil))
+    --     { E |-> e, L1 |-> nil }
+    -- 1<[3] (rev1((e | nil))):List --> (rev1(nil) @ (e | nil)):List
+
+    -- 1>[4] rule: eq rev1(nil) = nil
+    --     {}
+    -- 1<[4] (rev1(nil)):List --> (nil):List
+
+    -- 1>[5] rule: eq (nil @ L2) = L2
+    --     { L2 |-> (e | nil) }
+    -- 1<[5] (nil @ (e | nil)):List --> (e | nil):List
+
+    -- 1>[6] rule: eq ((E | L1) @ L2) = (E | (L1 @ L2))
+    --     { E |-> e, L1 |-> nil, L2 |-> l }
+    -- 1<[6] ((e | nil) @ l):List --> (e | (nil @ l)):List
+
+    -- 1>[7] rule: eq (nil @ L2) = L2
+    --     { L2 |-> l }
+    -- 1<[7] (nil @ l):List --> (l):List
+
+    -- 1>[8] rule: eq ((E | L1) = (E2 | L2)) = ((E = E2) and (L1 = L2))
+    --     { E2 |-> e, L2 |-> l, E |-> e, L1 |-> l }
+    -- 1<[8] ((e | l) = (e | l)):Bool --> ((e = e) and (l = l)):Bool
+
+    -- 1>[9] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> e }
+    -- 1<[9] (e = e):Bool --> (true):Bool
+
+    -- 1>[10] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> l }
+    -- 1<[10] (l = l):Bool --> (true):Bool
+
+    -- 1>[11] rule: eq (true and A:Bool) = A
+    --     { A:Bool |-> true }
+    -- 1<[11] (true and true):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0003 sec for 11 rewrites + 59 matches)
+close
+-- End of Proof of Theorem 3
+
+-- Lemma 2 [A property of rev1 (p-rev1)]
+-- rev1(rev1(L) @ L2) = rev1(L2) @ rev1(L)
+-- Proof of Lemma 2 By structural induction on L.
+-- I. Base case
+open LIST3 .
+    -- fresh constants
+    op l2 : -> List .
+    -- lemma 3 (rn@)
+    eq L @ nil = L .
+    -- check
+    red rev1(rev1(nil) @ l2) = rev1(l2) @ nil .
+    -- reduce in %LIST3(E) : (rev1((rev1(nil) @ l2)) = (rev1(l2) @ nil)):Bool
+    -- 1>[1] rule: eq rev1(nil) = nil
+    --     {}
+    -- 1<[1] (rev1(nil)):List --> (nil):List
+
+    -- 1>[2] rule: eq (nil @ L2) = L2
+    --     { L2 |-> l2 }
+    -- 1<[2] (nil @ l2):List --> (l2):List
+
+    -- 1>[3] rule: eq (L @ nil) = L
+    --     { L |-> rev1(l2) }
+    -- 1<[3] (rev1(l2) @ nil):List --> (rev1(l2)):List
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> rev1(l2) }
+    -- 1<[4] (rev1(l2) = rev1(l2)):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 4 rewrites + 16 matches)
+close
+-- II. Induction case
+open LIST3 .
+    -- fresh constants
+    ops l l2 : -> List .
+    op e : -> Elt.E .
+    -- induction hypothesis
+    eq rev1(rev1(l) @ L2) = rev1(L2) @ l .
+    -- lemma 3 (rn@)
+    eq L @ nil = L .
+    -- check
+    red rev1(rev1(e | l) @ l2) = rev1(l2) @ (e | l) .
+    -- reduce in %LIST3(E) : (rev1((rev1((e | l)) @ l2)) = (rev1(l2) @ (e | l))):Bool
+    -- 1>[1] rule: eq rev1((E | L1)) = (rev1(L1) @ (E | nil))
+    --     { E |-> e, L1 |-> l }
+    -- 1<[1] (rev1((e | l))):List --> (rev1(l) @ (e | nil)):List
+
+    -- 1>[2] rule: eq (A1:*Cosmos* @ ((E | L1) @ L2)) = (A1 @ (E | (L1 @ L2)))
+    --     { E |-> e, L1 |-> nil, A1:*Cosmos* |-> rev1(l), L2 |-> l2 }
+    -- 1<[2] ((rev1(l) @ (e | nil)) @ l2):List --> (rev1(l) @ (e | (nil @ l2))):List
+
+    -- 1>[3] rule: eq (nil @ L2) = L2
+    --     { L2 |-> l2 }
+    -- 1<[3] (nil @ l2):List --> (l2):List
+
+    -- 1>[4] rule: eq rev1((rev1(l) @ L2)) = (rev1(L2) @ l)
+    --     { L2 |-> (e | l2) }
+    -- 1<[4] (rev1((rev1(l) @ (e | l2)))):List --> (rev1((e | l2)) @ l):List
+
+    -- 1>[5] rule: eq rev1((E | L1)) = (rev1(L1) @ (E | nil))
+    --     { E |-> e, L1 |-> l2 }
+    -- 1<[5] (rev1((e | l2))):List --> (rev1(l2) @ (e | nil)):List
+
+    -- 1>[6] rule: eq (A1:*Cosmos* @ ((E | L1) @ L2)) = (A1 @ (E | (L1 @ L2)))
+    --     { E |-> e, L1 |-> nil, A1:*Cosmos* |-> rev1(l2), L2 |-> l }
+    -- 1<[6] ((rev1(l2) @ (e | nil)) @ l):List --> (rev1(l2) @ (e | (nil @ l))):List
+
+    -- 1>[7] rule: eq (nil @ L2) = L2
+    --     { L2 |-> l }
+    -- 1<[7] (nil @ l):List --> (l):List
+
+    -- 1>[8] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (rev1(l2) @ (e | l)) }
+    -- 1<[8] ((rev1(l2) @ (e | l)) = (rev1(l2) @ (e | l))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 8 rewrites + 119 matches)
+close
+-- End of Proof of Lemma 2
+
+-- Lemma 3 [Right nil of append (rn@)]
+-- L @ nil = L
+-- Proof of Lemma 3 By structural induction on L.
+-- I. Base case
+open LIST3 .
+    -- fresh constants
+    op l : -> List .
+    op e : -> Elt.E .
+    -- check
+    red nil @ nil = nil .
+    -- reduce in %LIST3(E) : ((nil @ nil) = nil):Bool
+    -- 1>[1] rule: eq (nil @ L2) = L2
+    --     { L2 |-> nil }
+    -- 1<[1] (nil @ nil):List --> (nil):List
+
+    -- 1>[2] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> nil }
+    -- 1<[2] (nil = nil):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0000 sec for 2 rewrites + 4 matches)
+close
+-- II. Induction case
+open LIST3 .
+    -- fresh constants
+    ops l : -> List .
+    op e : -> Elt.E .
+    -- induction hypothesis
+    eq l @ nil = l .
+    -- check
+    red (e | l) @ nil = e | l .
+    -- reduce in %LIST3(E) : (((e | l) @ nil) = (e | l)):Bool
+    -- 1>[1] rule: eq ((E | L1) @ L2) = (E | (L1 @ L2))
+    --     { E |-> e, L1 |-> l, L2 |-> nil }
+    -- 1<[1] ((e | l) @ nil):List --> (e | (l @ nil)):List
+
+    -- 1>[2] rule: eq (l @ nil) = l
+    --     {}
+    -- 1<[2] (l @ nil):List --> (l):List
+
+    -- 1>[3] rule: eq ((E | L1) = (E2 | L2)) = ((E = E2) and (L1 = L2))
+    --     { E2 |-> e, L2 |-> l, E |-> e, L1 |-> l }
+    -- 1<[3] ((e | l) = (e | l)):Bool --> ((e = e) and (l = l)):Bool
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> e }
+    -- 1<[4] (e = e):Bool --> (true):Bool
+
+    -- 1>[5] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> l }
+    -- 1<[5] (l = l):Bool --> (true):Bool
+
+    -- 1>[6] rule: eq (true and A:Bool) = A
+    --     { A:Bool |-> true }
+    -- 1<[6] (true and true):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 6 rewrites + 21 matches)
+close
+-- set trace off
