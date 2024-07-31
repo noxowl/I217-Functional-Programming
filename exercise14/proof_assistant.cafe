@@ -1,0 +1,1120 @@
+mod! PNAT1 {
+    [PNat]
+    op 0 : -> PNat {constr} .
+    op s : PNat -> PNat {constr} .
+    vars X Y Z : PNat .
+
+    eq (0 = s(Y)) = false .
+    eq (s(X) = s(Y)) = (X = Y) .
+
+    op _+_ : PNat PNat -> PNat .
+    eq 0 + Y = Y .
+    -- (+1)
+    eq s(X) + Y = s(X + Y) .
+    -- (+2)
+
+    op _*_ : PNat PNat -> PNat .
+    eq 0 * Y = 0 .
+    -- (*1)
+    eq s(X) * Y = (X * Y) + Y .
+    -- (*2)
+
+    op fact1 : PNat -> PNat .
+    eq fact1(0) = s(0) .
+    -- (f1-1)
+    eq fact1(s(X)) = s(X) * fact1(X) .
+    -- (f1-2)
+
+    op fact2 : PNat -> PNat .
+    op sfact2 : PNat PNat -> PNat .
+    eq fact2(X) = sfact2(X,s(0)) .
+    -- (f2)
+    eq sfact2(0,Y) = Y .
+    -- (sf2-1)
+    eq sfact2(s(X),Y) = sfact2(X,s(X) * Y) .
+    -- (sf2-2)
+}
+
+-- ---------------------
+-- Associativity of _+_
+-- ---------------------
+-- Theorem 1. [_+_ is associative (assoc+)]
+-- (X + Y) + Z = X + (Y + Z) Proof.
+-- By induction on X.
+open PNAT1 .
+    -- (RHIE)Note: The equation to be proved is set.
+    :goal { eq [assoc+] : (X + Y) + Z = X + (Y + Z) . }
+    :desc .
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [assoc+]: ((X:PNat + Y:PNat) + Z:PNat)
+    --         = (X + (Y + Z)) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [assoc+]: ((X:PNat + Y:PNat) + Z:PNat)
+    --         = (X + (Y + Z)) .
+    -- }
+    
+    -- X is set as the induction variable.
+    -- Structural induction is applied to the induction variable,
+    -- generating two goals: one for the base case and the other for the induction case.
+    :ind on (X:PNat)
+    -- **> Induction will be conducted on X:PNat
+    -- si: simultaneous induction
+    :apply (si)
+    :desc . 
+    -- (RHIE)Note: This is the goal for the base case.
+    -- 
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0035 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+    -- [si]=>
+    -- :goal { ** 1 -----------------------------------------
+    --   -- context module: %
+    --   -- induction variable
+    --     X:PNat
+    --   -- sentence to be proved
+    --     eq [INDUCTION-BASE]: ((0 + Y:PNat) + Z:PNat)
+    --         = (0 + (Y + Z)) .
+    -- }
+    
+    -- I. Base case
+    -- tc: theorem of constants
+    -- (RHIE)Note: Variables are replaced with fresh constants.
+    :apply (tc)
+    :desc .
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0042 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=>
+    -- :goal { ** 1-1 -----------------------------------------
+    --   -- context module: %
+    --   -- induction variable
+    --     X:PNat
+    --   -- introduced constants
+    --     op Y@PNat : -> PNat { prec: 0 }
+    --     op Z@PNat : -> PNat { prec: 0 }
+    --   -- sentence to be proved
+    --     eq [TC INDUCTION-BASE]: ((0 + Y@PNat) + Z@PNat)
+    --         = (0 + (Y@PNat + Z@PNat)) .
+    -- }
+    
+    -- rd: rewrite definition
+    -- The first goal is discharged
+    :apply (rd)
+    :desc .
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: ((0 + Y@PNat) + Z@PNat)
+    --       = (0 + (Y@PNat + Z@PNat))
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0023 sec, including 3 rewrites + 22 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+    -- 
+    -- (RHIE)Note: This is the goal for the induction case.
+    -- 
+    -- [si]=>
+    -- :goal { ** 2 -----------------------------------------
+    --   -- context module: %
+    --   -- induction variable
+    --     X:PNat
+    --   -- constant for induction
+    --     op X#PNat : -> PNat { prec: 0 }
+    --   -- introduced axiom
+    --     eq [SI assoc+]: ((X#PNat + Y:PNat) + Z:PNat)
+    --         = (X#PNat + (Y + Z)) .
+    --   -- sentence to be proved
+    --     eq [STEP]: ((s(X#PNat) + Y:PNat) + Z:PNat)
+    --         = (s(X#PNat) + (Y + Z)) .
+    -- }
+    -- (RHIE)Note: The induction hypothesis↑
+    
+    -- II. Induction case
+    -- (RHIE)Note: Variables are replaced with fresh constants.
+    :apply (tc)
+    :desc .
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0035 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=>
+    -- :goal { ** 2-1 -----------------------------------------
+    --   -- context module: %
+    --   -- induction variable
+    --     X:PNat
+    --   -- introduced constants
+    --     op Y@PNat : -> PNat { prec: 0 }
+    --     op Z@PNat : -> PNat { prec: 0 }
+    --   -- constant for induction
+    --     op X#PNat : -> PNat { prec: 0 }
+    --   -- introduced axiom
+    --     eq [SI assoc+]: ((X#PNat + Y:PNat) + Z:PNat)
+    --         = (X#PNat + (Y + Z)) .
+    --   -- sentence to be proved
+    --     eq [TC STEP]: ((s(X#PNat) + Y@PNat) + Z@PNat)
+    --         = (s(X#PNat) + (Y@PNat + Z@PNat)) .
+    -- }
+
+    -- (RHIE)Note: The second goal is discharged.
+    :apply (rd)
+    :desc .
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: ((s(X#PNat) + Y@PNat) + Z@PNat)
+    --       = (s(X#PNat) + (Y@PNat + Z@PNat))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0020 sec, including 5 rewrites + 74 matches)
+    -- ** All goals are successfully discharged.
+    -- (RHIE)Note: Then, the main goal is discharged. The proof is complete.
+close
+-- End of Proof of Theorem 1"
+
+
+-- ---------------------
+-- Commutativity of _+_
+-- ---------------------
+-- Lemma 1. [Right zero of _+_ (rz+)]
+-- X + 0 = X
+-- Proof. By induction on X.
+open PNAT1 .
+    :goal { eq [rz+] : X + 0 = X . }
+
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [rz+]: (X:PNat + 0) = X .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0013 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1} done.
+    -- [rd] discharged:
+    --   eq [INDUCTION-BASE]: (0 + 0) = 0
+    -- [rd] discharged goal "1".
+    -- (consumed 0.0013 sec, including 2 rewrites + 5 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2} done.
+    -- [rd] discharged:
+    --   eq [STEP]: (s(X#PNat) + 0) = s(X#PNat)
+    -- [rd] discharged goal "2".
+    -- (consumed 0.0013 sec, including 3 rewrites + 8 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Lemma 1
+
+-- Lemma 2. [Right successor of _+_ (rs+)]
+-- X + s(Y) = s(X + Y)
+-- Proof. By induction on X.
+open PNAT1 .
+    :goal { eq [rs+] : X + s(Y) = s(X + Y) . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [rs+]: (X:PNat + s(Y:PNat)) = s((X + Y)) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0014 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: (0 + s(Y@PNat))
+    --       = s((0 + Y@PNat))
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0010 sec, including 3 rewrites + 6 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0015 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: (s(X#PNat) + s(Y@PNat)) = s((s(X#PNat) + Y@PNat))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0010 sec, including 4 rewrites + 23 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Lemma 2
+
+
+-- To use the two lemmas that have been proved in the proof
+-- that _+_ is commutative, the following module is prepared:
+mod! PNAT1-RZRS+ {
+    pr(PNAT1)
+    vars X Y : PNat .
+    eq X + 0 = X .
+    eq X + s(Y) = s(X + Y) .
+}
+
+-- Theorem 2. [Commutativity of _+_ (comm+)]
+-- X + Y = Y + X
+-- Proof. By induction on X.
+open PNAT1-RZRS+ .
+    :goal { eq [comm+] : X + Y = Y + X . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [comm+]: (X:PNat + Y:PNat) = (Y + X) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0014 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: (0 + Y@PNat) = (Y@PNat + 0)
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0010 sec, including 3 rewrites + 8 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0014 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: (s(X#PNat) + Y@PNat) = (Y@PNat + s(X#PNat))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0010 sec, including 4 rewrites + 33 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Theorem 2
+
+
+-- ---------------------
+-- Associativity of _*_
+-- ---------------------
+-- Since we have proved that _+_ is associative and commutative,
+-- we give _+_ the operator attributes assoc and comm.
+
+mod! PNAT2 {
+    [PNat]
+    op 0 : -> PNat {constr} .
+    op s : PNat -> PNat {constr} .
+    vars X Y Z : PNat .
+
+    eq (0 = s(Y)) = false .
+    eq (s(X) = s(Y)) = (X = Y) .
+
+    -- modify from PNAT1
+    op _+_ : PNat PNat -> PNat {assoc comm} .
+    eq 0 + Y = Y .
+    -- (+1)
+    eq s(X) + Y = s(X + Y) .
+    -- (+2)
+
+    op _*_ : PNat PNat -> PNat .
+    eq 0 * Y = 0 .
+    -- (*1)
+    eq s(X) * Y = (X * Y) + Y .
+    -- (*2)
+
+    op fact1 : PNat -> PNat .
+    eq fact1(0) = s(0) .
+    -- (f1-1)
+    eq fact1(s(X)) = s(X) * fact1(X) .
+    -- (f1-2)
+
+    op fact2 : PNat -> PNat .
+    op sfact2 : PNat PNat -> PNat .
+    eq fact2(X) = sfact2(X,s(0)) .
+    -- (f2)
+    eq sfact2(0,Y) = Y .
+    -- (sf2-1)
+    eq sfact2(s(X),Y) = sfact2(X,s(X) * Y) .
+    -- (sf2-2)
+}
+
+-- Lemma 4 [distributive law of _*_ over _+_ (d*o+)]
+-- (X + Y) * Z = (X * Z) + (Y * Z)
+-- Proof. By induction on X.
+open PNAT2 .
+    :goal { eq [d*o+] : (X + Y) * Z = (X * Z) + (Y * Z) . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [d*o+]: ((X:PNat + Y:PNat) * Z:PNat)
+    --         = ((X * Z) + (Y * Z)) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0015 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: ((0 + Y@PNat) * Z@PNat)
+    --       = ((0 * Z@PNat) + (Y@PNat * Z@PNat))
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0010 sec, including 4 rewrites + 27 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0015 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: ((s(X#PNat) + Y@PNat) * Z@PNat)
+    --       = ((s(X#PNat) * Z@PNat) + (Y@PNat * Z@PNat))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0010 sec, including 5 rewrites + 102 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Lemma 4
+
+-- To use the lemma that has been proved in the proof
+-- that _*_ is associative, the following module is prepared:
+
+mod! PNAT2-D*O+ {
+    pr(PNAT2)
+    vars X Y Z : PNat .
+    eq (X + Y) * Z = (X * Z) + (Y * Z) .
+}
+
+-- Theorem 3 [Associativity of _*_ (assoc*)]
+-- (X * Y) * Z = X * (Y * Z)
+-- Proof. By induction on X.
+open PNAT2-D*O+ .
+    :goal { eq [assoc*] : (X * Y) * Z = X * (Y * Z) . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [assoc*]: ((X:PNat * Y:PNat) * Z:PNat)
+    --         = (X * (Y * Z)) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0011 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0015 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: ((0 * Y@PNat) * Z@PNat)
+    --       = (0 * (Y@PNat * Z@PNat))
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0009 sec, including 4 rewrites + 7 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0015 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: ((s(X#PNat) * Y@PNat) * Z@PNat)
+    --       = (s(X#PNat) * (Y@PNat * Z@PNat))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0011 sec, including 5 rewrites + 131 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Theorem 3
+
+-- Lemma 4 [Right zero of _*_ (rz*)]
+-- X * 0 = 0
+-- Proof. By induction on X.
+open PNAT2 .
+    :goal { eq [rz*] : X * 0 = 0 . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [rz*]: (X:PNat * 0) = 0 .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0010 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1} done.
+    -- [rd] discharged:
+    --   eq [INDUCTION-BASE]: (0 * 0) = 0
+    -- [rd] discharged goal "1".
+    -- (consumed 0.0010 sec, including 2 rewrites + 5 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2} done.
+    -- [rd] discharged:
+    --   eq [STEP]: (s(X#PNat) * 0) = 0
+    -- [rd] discharged goal "2".
+    -- (consumed 0.0011 sec, including 4 rewrites + 9 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Lemma 4
+
+-- Lemma 5 [Right successor of _*_ (rs*)]
+-- X * s(Y) = (X * Y) + X
+-- Proof. By induction on X.
+open PNAT2 .
+    :goal { eq [rs*] : X * s(Y) = (X * Y) + X . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [rs*]: (X:PNat * s(Y:PNat)) = ((X * Y) + X) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0010 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: (0 * s(Y@PNat))
+    --       = ((0 * Y@PNat) + 0)
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0009 sec, including 4 rewrites + 7 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: (s(X#PNat) * s(Y@PNat)) = ((s(X#PNat) * Y@PNat) + s(X#PNat))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0009 sec, including 6 rewrites + 75 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Lemma 5
+
+--  To use the two lemmas that have been proved in the proof
+-- that _*_ is commutative, the following module is prepared:
+mod! PNAT2-RZRS* {
+    pr(PNAT2)
+    vars X Y : PNat .
+    eq X * 0 = 0 .
+    eq X * s(Y) = (X * Y) + X .
+}
+
+-- Theorem 4. [Commutativity of _*_ (comm*)]
+-- X * Y = Y * X
+-- Proof. By induction on X.
+open PNAT2-RZRS* .
+    :goal { eq [comm*] : X * Y = Y * X . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [comm*]: (X:PNat * Y:PNat) = (Y * X) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0011 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: (0 * Y@PNat) = (Y@PNat * 0)
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0009 sec, including 3 rewrites + 8 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: (s(X#PNat) * Y@PNat) = (Y@PNat * s(X#PNat))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0009 sec, including 4 rewrites + 49 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Theorem 4
+
+
+-- ------------------------------------------
+-- Correctness of a Tail Recursive Factorial
+-- ------------------------------------------
+-- Since we have proved that _*_ is associative and commutative,
+-- we give _*_ the operator attributes assoc and comm
+mod! PNAT3 {
+    [PNat]
+    op 0 : -> PNat {constr} .
+    op s : PNat -> PNat {constr} .
+    vars X Y Z : PNat .
+
+    eq (0 = s(Y)) = false .
+    eq (s(X) = s(Y)) = (X = Y) .
+
+    -- modify from PNAT1
+    op _+_ : PNat PNat -> PNat {assoc comm} .
+    eq 0 + Y = Y .
+    -- (+1)
+    eq s(X) + Y = s(X + Y) .
+    -- (+2)
+
+    -- modify from PNAT2
+    op _*_ : PNat PNat -> PNat {assoc comm} .
+    eq 0 * Y = 0 .
+    -- (*1)
+    eq s(X) * Y = (X * Y) + Y .
+    -- (*2)
+
+    op fact1 : PNat -> PNat .
+    eq fact1(0) = s(0) .
+    -- (f1-1)
+    eq fact1(s(X)) = s(X) * fact1(X) .
+    -- (f1-2)
+
+    op fact2 : PNat -> PNat .
+    op sfact2 : PNat PNat -> PNat .
+    eq fact2(X) = sfact2(X,s(0)) .
+    -- (f2)
+    eq sfact2(0,Y) = Y .
+    -- (sf2-1)
+    eq sfact2(s(X),Y) = sfact2(X,s(X) * Y) .
+    -- (sf2-2)
+}
+
+-- The proof of the next lemma needs Lemma 4, and then the following module is prepared:
+mod! PNAT3-D*O+ {
+    pr(PNAT3)
+    vars X Y Z : PNat .
+    eq (X + Y) * Z = (X * Z) + (Y * Z) .
+}
+
+-- Lemma 6 [Property of sfact2 (sf2-p)]
+-- Y * sfact2(X,Z) = sfact2(X,Y * Z)
+-- Proof. By induction on X.
+open PNAT3-D*O+ .
+    :goal { eq [sf2-p] : Y * sfact2(X,Z) = sfact2(X,Y * Z) . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [sf2-p]: (Y:PNat * sfact2(X:PNat,Z:PNat))
+    --         = sfact2(X,(Y * Z)) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0010 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0014 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: (Y@PNat * sfact2(0,Z@PNat))
+    --       = sfact2(0,(Y@PNat * Z@PNat))
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0009 sec, including 3 rewrites + 30 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0014 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: (Y@PNat * sfact2(s(X#PNat),Z@PNat))
+    --       = sfact2(s(X#PNat),(Y@PNat * Z@PNat))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0010 sec, including 7 rewrites + 182 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Lemma 6
+
+-- To use the lemma that has been proved in the proof
+-- that the tail recursive factorial is correct, the following module is prepared:
+mod! PNAT3-SF2-P {
+    pr(PNAT3)
+    vars X Y Z : PNat .
+    eq [sf2-p] : Y * sfact2(X,Z) = sfact2(X,Y * Z) .
+}
+
+-- Theorem 5 [Correctness of tail recursive fact (ctrf)]
+-- fact1(X) = fact2(X)
+-- Proof. By induction on X.
+open PNAT3-SF2-P .
+    :goal { eq [ctrf] : fact1(X) = fact2(X) . }
+    :ind on (X:PNat)
+    :apply (si)
+
+    -- I. Base case
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [ctrf]: fact1(X:PNat) = fact2(X) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on X:PNat
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0010 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1} done.
+    -- [rd] discharged:
+    --   eq [INDUCTION-BASE]: fact1(0) = fact2(0)
+    -- [rd] discharged goal "1".
+    -- (consumed 0.0011 sec, including 4 rewrites + 7 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2} done.
+    -- [rd] discharged:
+    --   eq [STEP]: fact1(s(X#PNat)) = fact2(s(X#PNat))
+    -- [rd] discharged goal "2".
+    -- (consumed 0.0011 sec, including 13 rewrites + 51 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Theorem 5
+
+-- 여기까지가 11회 강의 내용에서 다룬 내용 (손증명 + CafeOBJ 일부 지원)과 동일 내용.
+-- Proof Assistant의 優っている 부분은 Human Error를 막을 수 있다는 점.
+-- 그러나, Proof Assistant를 사용하기 위해서는 문법을 알아야 하며, 증명을 위한 전략을 사람이 세워야 한다.
+
+-- ---------------------
+-- Associativity of _@_
+-- ---------------------
+mod! LIST1 (E :: TRIV) {
+    [List]
+    op nil : -> List {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+    op _@_ : List List -> List .
+    op rev1 : List -> List .
+    op rev2 : List -> List .
+    op sr2 : List List -> List .
+    
+    vars E E2 : Elt.E .
+    vars L1 L2 L3 : List .
+    
+    eq (nil = E | L1) = false .
+    eq (E | L1 = E2 | L2) = (E = E2) and (L1 = L2) .
+
+    -- (@1)
+    eq nil @ L2 = L2 .
+    -- (@2)
+    eq (E | L1) @ L2 = E | (L1 @ L2) . 
+
+    -- (r1-1)
+    eq rev1(nil) = nil . 
+    -- (r1-2)
+    eq rev1(E | L1) = rev1(L1) @ (E | nil) . 
+
+    -- (r2)
+    eq rev2(L1) = sr2(L1,nil) .
+    -- (sr2-1)
+    eq sr2(nil,L2) = L2 .
+    -- (sr2-2)
+    eq sr2(E | L1,L2) = sr2(L1,E | L2) .
+}
+
+-- Theorem 7. [Associativity of _@_ (assoc@)]
+-- (L1 @ L2) @ L3 = L1 @ (L2 @ L3)
+-- Proof. By induction on L1.
+open LIST1 .
+    :goal { eq [assoc@] : (L1 @ L2) @ L3 = L1 @ (L2 @ L3) .}
+    :ind on (L1:List)
+    :apply (si)
+
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [assoc@]: ((L1:List @ L2:List) @ L3:List)
+    --         = (L1 @ (L2 @ L3)) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on L1:List
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0013 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: ((nil @ L2@List) @ L3@List)
+    --       = (nil @ (L2@List @ L3@List))
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0008 sec, including 3 rewrites + 22 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0014 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: (((L1#Elt | L1#List) @ L2@List) @ L3@List)
+    --       = ((L1#Elt | L1#List) @ (L2@List @ L3@List))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0009 sec, including 5 rewrites + 74 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Theorem 7
+
+-- Since we have proved that _@_ is associative,
+-- we give _@_ the operator attribute assoc.
+mod! LIST2 (E :: TRIV) {
+    [List]
+    op nil : -> List {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+
+    -- modify from LIST1
+    op _@_ : List List -> List {assoc} .
+
+    op rev1 : List -> List .
+    op rev2 : List -> List .
+    op sr2 : List List -> List .
+    
+    vars E E2 : Elt.E .
+    vars L1 L2 L3 : List .
+    
+    eq (nil = E | L1) = false .
+    eq (E | L1 = E2 | L2) = (E = E2) and (L1 = L2) .
+
+    -- (@1)
+    eq nil @ L2 = L2 .
+    -- (@2)
+    eq (E | L1) @ L2 = E | (L1 @ L2) . 
+
+    -- (r1-1)
+    eq rev1(nil) = nil . 
+    -- (r1-2)
+    eq rev1(E | L1) = rev1(L1) @ (E | nil) . 
+
+    -- (r2)
+    eq rev2(L1) = sr2(L1,nil) .
+    -- (sr2-1)
+    eq sr2(nil,L2) = L2 .
+    -- (sr2-2)
+    eq sr2(E | L1,L2) = sr2(L1,E | L2) .  
+}
+
+-- Lemma 8 [Property of sr2 (sr2-p)]
+-- sr2(L1,E2 | L2) = sr2(L1,nil) @ (E2 | L2)
+-- Proof. By induction on L1.
+open LIST2 .
+    :goal { eq [sr2-p] : sr2(L1,E2 | L2) = sr2(L1,nil) @ (E2 | L2) . }
+    :ind on (L1:List)
+    :apply (si)
+    -- I. Base case
+    :apply (tc)
+    :apply (rd)
+    -- II. Induction case
+    :apply (tc)
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    --   -- context module: %
+    --   -- sentence to be proved
+    --     eq [sr2-p]: sr2(L1:List,(E2:Elt | L2:List))
+    --         = (sr2(L1,nil) @ (E2 | L2)) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on L1:List
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0011 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [tc]=> :goal{1} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0013 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1-1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1-1} done.
+    -- [rd] discharged:
+    --   eq [TC INDUCTION-BASE]: sr2(nil,(E2@Elt | L2@List))
+    --       = (sr2(nil,nil) @ (E2@Elt | L2@List))
+    -- [rd] discharged goal "1-1".
+    -- (consumed 0.0009 sec, including 4 rewrites + 7 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [tc]=> :goal{2} done.
+    -- ** Generated 1 goal
+    -- (consumed 0.0014 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "2-1".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2-1} done.
+    -- [rd] discharged:
+    --   eq [TC STEP]: sr2((L1#Elt | L1#List),(E2@Elt | L2@List))
+    --       = (sr2((L1#Elt | L1#List),nil) @ (E2@Elt | L2@List))
+    -- [rd] discharged goal "2-1".
+    -- (consumed 0.0009 sec, including 7 rewrites + 76 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Lemma 8
+
+-- To use the lemma that has been proved in the proof
+-- that the tail recursive reverse is correct, the following module is prepared:
+mod! LIST2-SR2-P {
+    pr(LIST2)
+    vars E E2 : Elt.E .
+    vars L1 L2 L3 : List .
+    eq [sr2-p] : sr2(L1,E2 | L2) = sr2(L1,nil) @ (E2 | L2) .
+}
+
+-- Theorem 8. [Correctness of a tail recursive rev (ctrr)]
+-- rev1(L1) = rev2(L1)
+-- Proof. By induction on L1.
+open LIST2-SR2-P .
+    :goal { eq [ctrr] : rev1(L1) = rev2(L1) . }
+    :ind on (L1:List)
+    :apply (si)
+    -- I. Base case
+    :apply (rd)
+    -- II. Induction case
+    :apply (rd)
+    -- 
+    -- :goal { ** root -----------------------------------------
+    -- -- context module: %
+    -- -- sentence to be proved
+    -- eq [ctrr]: rev1(L1:List) = rev2(L1) .
+    -- }
+    -- ** Initial goal (root) is generated. **
+    -- **> Induction will be conducted on L1:List
+    -- [si]=> :goal{root} done. done.
+    -- ** Generated 2 goals
+    -- (consumed 0.0012 sec, including 0 rewrites + 0 matches)
+    -- >> Next target goal is "1".
+    -- >> Remaining 2 goals.
+
+    -- [rd]=> :goal{1} done.
+    -- [rd] discharged:
+    -- eq [INDUCTION-BASE]: rev1(nil) = rev2(nil)
+    -- [rd] discharged goal "1".
+    -- (consumed 0.0010 sec, including 4 rewrites + 7 matches)
+    -- >> Next target goal is "2".
+    -- >> Remaining 1 goal.
+
+    -- [rd]=> :goal{2} done.
+    -- [rd] discharged:
+    -- eq [STEP]: rev1((L1#Elt | L1#List)) = rev2((L1#Elt | L1#List))
+    -- [rd] discharged goal "2".
+    -- (consumed 0.0010 sec, including 7 rewrites + 59 matches)
+    -- ** All goals are successfully discharged.
+close
+-- End of Proof of Theorem 8
+
+-- 여기까지가 12회 강의 내용에서 다룬 내용 (손증명 + CafeOBJ 일부 지원)과 동일 내용.
