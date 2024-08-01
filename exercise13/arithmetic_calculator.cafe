@@ -1,0 +1,678 @@
+mod! PNAT principal-sort PNat&Err {
+    [PZero NzPNat < PNat]
+    [PNat ErrPNat < PNat&Err]
+    op 0 : -> PZero {constr} .
+    op s : PNat -> NzPNat {constr} .
+    op errPNat : -> ErrPNat {constr} .
+    -- 
+    vars M N : PNat .
+    vars ME NE : PNat&Err .
+
+    -- 0과 N의 따름수(successor number)가 동일하다면 둘은 동일하지 않다.
+    eq (0 = s(N)) = false .
+    -- M과 N 각각의 따름수가 동일하다면 M과 N도 동일하다. 
+    eq (s(M) = s(N)) = (M = N) .
+    eq (errPNat = N) = false .
+    
+    -- Declared in the Built-in module EQL:
+    -- op_=_:S S->Bool{comm} .
+    -- eq (X = X) = true .
+
+    op if_then{_}else{_} : Bool PNat&Err PNat&Err -> PNat&Err .
+    eq if true then {ME} else {NE} = ME .
+    eq if false then {ME} else {NE} = NE .
+
+    op _<_ : PNat PNat -> Bool .
+    eq 0 < 0 = false .
+    eq 0 < s(N) = true .
+    eq s(M) < 0 = false .
+    -- M의 따름수와 N의 따름수에 대소관계가 있다면 M과 N도 그러하다.
+    eq s(M) < s(N) = M < N .
+
+    op _+_ : PNat PNat -> PNat .
+    op _+_ : PNat&Err PNat&Err -> PNat&Err .
+    eq 0 + N = N .
+    -- M의 따름수와 N의 합은 M과 N의 합의 따름수와 같다.
+    eq s(M) + N = s(M + N) .
+    -- for the error
+    eq ME + errPNat = errPNat .
+    eq errPNat + NE = errPNat .
+
+    op _*_ : PNat PNat -> PNat .
+    op _*_ : PNat&Err PNat&Err -> PNat&Err .
+    eq 0 * N = 0 .
+    -- M의 따름수에 N을 곱한 것은, N에 M을 곱하고 더한 것과 같다.
+    eq s(M) * N = N + (M * N) .
+    -- for the error
+    eq ME * errPNat = errPNat .
+    eq errPNat * NE = errPNat .
+
+    -- symmetric difference
+    op sd : PNat PNat -> PNat .
+    op sd : PNat&Err PNat&Err -> PNat&Err .
+    eq sd(0,N) = N .
+    eq sd(s(M),0) = s(M) .
+    eq sd(s(M),s(N)) = sd(M,N) .
+    -- for the error
+    eq sd(ME,errPNat) = errPNat .
+    eq sd(errPNat,NE) = errPNat .
+
+    op _quo_ : PNat PZero -> ErrPNat .
+    op _quo_ : PNat NzPNat -> PNat .
+    op _quo_ : PNat&Err PNat&Err -> PNat&Err .
+    eq M quo 0 = errPNat .
+    eq M quo s(N) = if M < s(N) then {0} else {s(sd(M,s(N)) quo s(N))} .
+    -- for the error
+    eq ME quo errPNat = errPNat .
+    eq errPNat quo NE = errPNat .
+
+    op _rem_ : PNat PZero -> ErrPNat .
+    op _rem_ : PNat NzPNat -> PNat .
+    op _rem_ : PNat&Err PNat&Err -> PNat&Err .
+    eq M rem 0 = errPNat .
+    eq M rem s(N) = if M < s(N) then {M} else {sd(M,s(N)) rem s(N)} .
+    -- for the error
+    eq ME rem errPNat = errPNat .
+    eq errPNat rem NE = errPNat . 
+}
+
+mod! EXP {
+    [ExpPNat < Exp]
+    op 0 : -> ExpPNat {constr} .
+    op s : ExpPNat -> ExpPNat {constr } .
+    -- 이하의 연산자는 CafeOBJ의 연산으로 처리되는 것이 아니고 사용자 지정 컴파일러에 의해 처리된다.
+    -- 왜?: Exp Sort에 대한 연산자는 기본으로 지정되어 있지 아니하고 여기서 새로 지정했기 때문. 
+    op _+_ : Exp Exp -> Exp {constr l-assoc prec: 30} .
+    op _-_ : Exp Exp -> Exp {constr l-assoc prec: 30} .
+    op _*_ : Exp Exp -> Exp {constr l-assoc prec: 29} .
+    op _/_ : Exp Exp -> Exp {constr l-assoc prec: 29} .
+    op _%_ : Exp Exp -> Exp {constr l-assoc prec: 29} .
+}
+
+mod! INTER {
+    pr(PNAT)
+    pr(EXP)
+
+    op inter : ExpPNat -> PNat .
+    op inter : Exp -> PNat&Err .
+    var N : PNat .
+    var EN : ExpPNat .
+    vars E E1 E2 : Exp .
+    
+    eq inter(0) = 0 .
+    eq inter(s(EN)) = s(inter(EN)) .
+    eq inter(E1 + E2) = inter(E1) + inter(E2) .
+    eq inter(E1 - E2) = sd(inter(E1),inter(E2)) .
+    eq inter(E1 * E2) = inter(E1) * inter(E2) .
+    eq inter(E1 / E2) = inter(E1) quo inter(E2) .
+    eq inter(E1 % E2) = inter(E1) rem inter(E2) .
+}
+
+mod! INSTR principal-sort Instr {
+    pr(PNAT)
+    [Instr]
+    op push : PNat -> Instr {constr} .
+    op add : -> Instr {constr} .
+    op minus : -> Instr {constr} .
+    op mult : -> Instr {constr} .
+    op div : -> Instr {constr} .
+    op mod : -> Instr {constr} .
+}
+
+mod! LIST (E :: TRIV) {
+    [List]
+    op nil : -> List {constr} .
+    op _|_ : Elt.E List -> List {constr} .
+    op _@_ : List List -> List {assoc} .
+    var E : Elt.E .
+    vars L1 L2 : List .
+    -- _@_
+    eq nil @ L2 = L2 .
+    -- push, pop 과 같은 것은 매턴매칭으로 처리할 수 있으므로 이것만으로 충분하다.
+    eq (E | L1) @ L2 = E | (L1 @ L2) .
+}
+
+mod! ILIST { pr(LIST(INSTR) * {sort List -> IList}) }
+mod! STACK {
+    pr(LIST(PNAT) * {
+        sort List -> Stack,
+        op nil -> empstk
+        }
+    )
+}
+
+mod! VM {
+    pr(ILIST)
+    pr(STACK)
+
+    op vm : IList -> PNat&Err .
+    op exec : IList Stack -> PNat&Err .
+    var IL : IList .
+    var PC : PNat .
+    var Stk : Stack .
+    var N : PNat .
+    vars NE NE1 NE2 : PNat&Err .
+
+    eq vm(IL) = exec(IL,empstk) .
+    eq exec(nil,empstk) = errPNat .
+    eq exec(nil,NE | empstk) = NE .
+    eq exec(nil,NE | NE1 | Stk) = errPNat .
+    eq exec(push(N) | IL,Stk) = exec(IL,N | Stk) .
+    eq exec(add | IL,empstk) = errPNat .
+    eq exec(add | IL,NE | empstk) = errPNat .
+    eq exec(add | IL,NE2 | NE1 | Stk) = exec(IL,NE1 + NE2 | Stk) .
+    eq exec(minus | IL,empstk) = errPNat .
+    eq exec(minus | IL,NE | empstk) = errPNat .
+    eq exec(minus | IL,NE2 | NE1 | Stk) = exec(IL,sd(NE1,NE2) | Stk) .
+    eq exec(mult | IL,empstk) = errPNat .
+    eq exec(mult | IL,NE | empstk) = errPNat .
+    eq exec(mult | IL,NE2 | NE1 | Stk) = exec(IL,NE1 * NE2 | Stk) .
+    eq exec(div | IL,empstk) = errPNat .
+    eq exec(div | IL,NE | empstk) = errPNat .
+    eq exec(div | IL,NE2 | NE1 | Stk) = exec(IL,NE1 quo NE2 | Stk) .
+    eq exec(mod | IL,empstk) = errPNat .
+    eq exec(mod | IL,NE | empstk) = errPNat .
+    eq exec(mod | IL,NE2 | NE1 | Stk) = exec(IL,NE1 rem NE2 | Stk) .
+}
+
+mod! COMP {
+    pr(EXP)
+    pr(ILIST)
+
+    op comp : Exp -> IList .
+    op en2n : ExpPNat -> PNat .
+    var EN : ExpPNat .
+    vars E E1 E2 : Exp .
+
+    eq comp(EN) = push(en2n(EN)) | nil .
+    eq comp(E1 + E2) = comp(E1) @ comp(E2) @ (add | nil) .
+    eq comp(E1 - E2) = comp(E1) @ comp(E2) @ (minus | nil) .
+    eq comp(E1 * E2) = comp(E1) @ comp(E2) @ (mult | nil) .
+    eq comp(E1 / E2) = comp(E1) @ comp(E2) @ (div | nil) .
+    eq comp(E1 % E2) = comp(E1) @ comp(E2) @ (mod | nil) .
+    eq en2n(0) = 0 .
+    eq en2n(s(EN)) = s(en2n(EN)) .
+}
+
+mod! VERIFY-COMP {
+    pr(INTER)
+    pr(VM)
+    pr(COMP)
+
+    op th1 : Exp -> Bool .
+    op lem1 : ExpPNat -> Bool .
+    op lem2 : Exp IList Stack -> Bool .
+    var E : Exp .
+    var EN : ExpPNat .
+    var L : IList .
+    var S : Stack .
+
+    eq th1(E) = (inter(E) = vm(comp(E))) .
+    -- lemmas
+    eq lem1(EN) = (inter(EN) = vm(comp(EN))) .
+    eq lem2(E,L,S) = (exec(comp(E) @ L,S) = exec(L,vm(comp(E)) | S)) .
+}
+
+
+-- Verification of Arithmetic Calculator Compiler
+-- Theorem 1 [(relative) correctness of the compiler with respect to the interpreter]
+-- inter(E) = vm(comp(E))
+--
+-- Proof of Theorem 1 By structural induction on E.
+-- I. Base case
+open VERIFY-COMP .
+    -- fresh constants
+    op en : -> ExpPNat .
+    -- check
+    red th1(en) .
+    -- reduce in %VERIFY-COMP : (th1(en)):Bool
+    -- 1>[1] rule: eq th1(E) = (inter(E) = vm(comp(E)))
+    --     { E |-> en }
+    -- 1<[1] (th1(en)):Bool --> (inter(en) = vm(comp(en))):Bool
+
+    -- 1>[2] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(en) }
+    -- 1<[2] (vm(comp(en))):PNat&Err --> (exec(comp(en),empstk)):PNat&Err
+
+    -- 1>[3] rule: eq comp(EN) = (push(en2n(EN)) | nil)
+    --     { EN |-> en }
+    -- 1<[3] (comp(en)):IList --> (push(en2n(en)) | nil):IList
+
+    -- 1>[4] rule: eq exec((push(N:PNat) | IL:IList),Stk:Stack) = exec(IL,(N | Stk))
+    --     { N:PNat |-> en2n(en), Stk:Stack |-> empstk, IL:IList |-> nil }
+    -- 1<[4] (exec((push(en2n(en)) | nil),empstk)):PNat&Err --> (exec(nil,(en2n(en) | empstk))):PNat&Err
+
+    -- 1>[5] rule: eq exec(nil,(NE:PNat&Err | empstk)) = NE
+    --     { NE:PNat&Err |-> en2n(en) }
+    -- 1<[5] (exec(nil,(en2n(en) | empstk))):PNat&Err --> (en2n(en)):PNat
+
+    -- (inter(en) = en2n(en)):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 5 rewrites + 22 matches)
+    -- 
+    -- memo: this means that the following equation is not proved yet:
+    -- (inter(en) = en2n(en)):Bool
+close
+
+--
+-- For this proof score fragment, CafeOBJ returns the following:
+-- inter(en) = en2n(en)
+-- which allows us to conjecture the lemma:
+-- op lem1 : ExpPNat -> Bool .
+-- eq lem1(EN) = (inter(EN) = vm(comp(EN))) .
+-- Then, the proof score fragment is revised as follows:
+--
+
+open VERIFY-COMP .
+    -- fresh constants
+    op en : -> ExpPNat .
+    -- lemmas
+    eq inter(EN) = vm(comp(EN)) .
+    -- check
+    red th1(en) .
+    -- reduce in %VERIFY-COMP : (th1(en)):Bool
+    -- 1>[1] rule: eq th1(E) = (inter(E) = vm(comp(E)))
+    --     { E |-> en }
+    -- 1<[1] (th1(en)):Bool --> (inter(en) = vm(comp(en))):Bool
+
+    -- 1>[2] rule: eq inter(EN) = vm(comp(EN))
+    --     { EN |-> en }
+    -- 1<[2] (inter(en)):PNat --> (vm(comp(en))):PNat&Err
+
+    -- 1>[3] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(en) }
+    -- 1<[3] (vm(comp(en))):PNat&Err --> (exec(comp(en),empstk)):PNat&Err
+
+    -- 1>[4] rule: eq comp(EN) = (push(en2n(EN)) | nil)
+    --     { EN |-> en }
+    -- 1<[4] (comp(en)):IList --> (push(en2n(en)) | nil):IList
+
+    -- 1>[5] rule: eq exec((push(N:PNat) | IL:IList),Stk:Stack) = exec(IL,(N | Stk))
+    --     { N:PNat |-> en2n(en), Stk:Stack |-> empstk, IL:IList |-> nil }
+    -- 1<[5] (exec((push(en2n(en)) | nil),empstk)):PNat&Err --> (exec(nil,(en2n(en) | empstk))):PNat&Err
+
+    -- 1>[6] rule: eq exec(nil,(NE:PNat&Err | empstk)) = NE
+    --     { NE:PNat&Err |-> en2n(en) }
+    -- 1<[6] (exec(nil,(en2n(en) | empstk))):PNat&Err --> (en2n(en)):PNat
+
+    -- 1>[7] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(en) }
+    -- 1<[7] (vm(comp(en))):PNat&Err --> (exec(comp(en),empstk)):PNat&Err
+
+    -- 1>[8] rule: eq comp(EN) = (push(en2n(EN)) | nil)
+    --     { EN |-> en }
+    -- 1<[8] (comp(en)):IList --> (push(en2n(en)) | nil):IList
+
+    -- 1>[9] rule: eq exec((push(N:PNat) | IL:IList),Stk:Stack) = exec(IL,(N | Stk))
+    --     { N:PNat |-> en2n(en), Stk:Stack |-> empstk, IL:IList |-> nil }
+    -- 1<[9] (exec((push(en2n(en)) | nil),empstk)):PNat&Err --> (exec(nil,(en2n(en) | empstk))):PNat&Err
+
+    -- 1>[10] rule: eq exec(nil,(NE:PNat&Err | empstk)) = NE
+    --     { NE:PNat&Err |-> en2n(en) }
+    -- 1<[10] (exec(nil,(en2n(en) | empstk))):PNat&Err --> (en2n(en)):PNat
+
+    -- 1>[11] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> en2n(en) }
+    -- 1<[11] (en2n(en) = en2n(en)):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 11 rewrites + 34 matches)
+close
+-- II. Induction case
+open VERIFY-COMP .
+    -- fresh constants
+    ops e1 e2 : -> Exp .
+    -- induction hypothesis
+    eq inter(e1) = vm(comp(e1)) .
+    eq inter(e2) = vm(comp(e2)) .
+    -- check
+    red th1(e1 + e2) .
+    -- reduce in %VERIFY-COMP : (th1((e1 + e2))):Bool
+    -- 1>[1] rule: eq th1(E) = (inter(E) = vm(comp(E)))
+    --     { E |-> (e1 + e2) }
+    -- 1<[1] (th1((e1 + e2))):Bool --> (inter((e1 + e2)) = vm(comp((e1 + e2)))):Bool
+
+    -- 1>[2] rule: eq inter((E1:Exp + E2:Exp)) = (inter(E1) + inter(E2))
+    --     { E1:Exp |-> e1, E2:Exp |-> e2 }
+    -- 1<[2] (inter((e1 + e2))):PNat&Err --> (inter(e1) + inter(e2)):PNat&Err
+
+    -- 1>[3] rule: eq inter(e1) = vm(comp(e1))
+    --     {}
+    -- 1<[3] (inter(e1)):PNat&Err --> (vm(comp(e1))):PNat&Err
+
+    -- 1>[4] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(e1) }
+    -- 1<[4] (vm(comp(e1))):PNat&Err --> (exec(comp(e1),empstk)):PNat&Err
+
+    -- 1>[5] rule: eq inter(e2) = vm(comp(e2))
+    --     {}
+    -- 1<[5] (inter(e2)):PNat&Err --> (vm(comp(e2))):PNat&Err
+
+    -- 1>[6] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(e2) }
+    -- 1<[6] (vm(comp(e2))):PNat&Err --> (exec(comp(e2),empstk)):PNat&Err
+
+    -- 1>[7] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp((e1 + e2)) }
+    -- 1<[7] (vm(comp((e1 + e2)))):PNat&Err --> (exec(comp((e1 + e2)),empstk)):PNat&Err
+
+    -- 1>[8] rule: eq comp((E1:Exp + E2:Exp)) = (comp(E1) @ (comp(E2) @ (add | nil)))
+    --     { E1:Exp |-> e1, E2:Exp |-> e2 }
+    -- 1<[8] (comp((e1 + e2))):IList --> (comp(e1) @ (comp(e2) @ (add | nil))):IList
+
+    -- ((exec(comp(e1),empstk) + exec(comp(e2),empstk)) = exec((comp(e1) @ (comp(e2) @ (add | nil))),empstk)):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 8 rewrites + 116 matches)
+    -- 
+    -- memo: this means that the following equation is not proved yet:
+    -- ((exec(comp(e1),empstk) + exec(comp(e2),empstk)) = exec((comp(e1) @ (comp(e2) @ (add | nil))),empstk)):Bool
+close
+
+-- For this proof score fragment, CafeOBJ returns the following:
+-- exec(comp(e1),empstk) + exec(comp(e2),empstk) = exec(comp(e1) @ comp(e2) @ add | nil,empstk)
+-- Let us consider how the following term is likely to be rewritten:
+--
+-- exec(comp(e1) @ comp(e2) @ add | nil,empstk)
+-- →* exec(comp(e2) @ add | nil,vm(comp(e1)) | empstk)
+-- →* exec(add | nil, vm(comp(e2)) | vm(comp(e1)) | empstk)
+-- → exec(nil, vm(comp(e1)) + vm(comp(e2)) | empstk)
+-- → vm(comp(e1)) + vm(comp(e2))
+-- →* exec(comp(e1),empstk) + exec(comp(e2),empstk)
+--
+-- If we have the following equation
+-- exec(comp(E) @ L,S) = exec(L,vm(comp(E)) | S)
+-- then we make it possible to actually conduct the rewriting on the last page.
+-- Therefore, we conjecture the lemma:
+--
+-- op lem2 : Exp IList Stack -> Bool .
+-- eq lem2(E,L,S) = (exec(comp(E) @ L,S) = exec(L,vm(comp(E)) | S)) .
+--
+-- The proof score fragment can be revised as follows:
+open VERIFY-COMP .
+    -- fresh constants
+    ops e1 e2 : -> Exp .
+    -- lemmas
+    eq exec(comp(E) @ L,S) = exec(L,vm(comp(E)) | S) .
+    -- induction hypothesis
+    eq inter(e1) = vm(comp(e1)) .
+    eq inter(e2) = vm(comp(e2)) .
+    -- check
+    red th1(e1 + e2) .
+    -- reduce in %VERIFY-COMP : (th1((e1 + e2))):Bool
+    -- 1>[1] rule: eq th1(E) = (inter(E) = vm(comp(E)))
+    --     { E |-> (e1 + e2) }
+    -- 1<[1] (th1((e1 + e2))):Bool --> (inter((e1 + e2)) = vm(comp((e1 + e2)))):Bool
+
+    -- 1>[2] rule: eq inter((E1:Exp + E2:Exp)) = (inter(E1) + inter(E2))
+    --     { E1:Exp |-> e1, E2:Exp |-> e2 }
+    -- 1<[2] (inter((e1 + e2))):PNat&Err --> (inter(e1) + inter(e2)):PNat&Err
+
+    -- 1>[3] rule: eq inter(e1) = vm(comp(e1))
+    --     {}
+    -- 1<[3] (inter(e1)):PNat&Err --> (vm(comp(e1))):PNat&Err
+
+    -- 1>[4] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(e1) }
+    -- 1<[4] (vm(comp(e1))):PNat&Err --> (exec(comp(e1),empstk)):PNat&Err
+
+    -- 1>[5] rule: eq inter(e2) = vm(comp(e2))
+    --     {}
+    -- 1<[5] (inter(e2)):PNat&Err --> (vm(comp(e2))):PNat&Err
+
+    -- 1>[6] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(e2) }
+    -- 1<[6] (vm(comp(e2))):PNat&Err --> (exec(comp(e2),empstk)):PNat&Err
+
+    -- 1>[7] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp((e1 + e2)) }
+    -- 1<[7] (vm(comp((e1 + e2)))):PNat&Err --> (exec(comp((e1 + e2)),empstk)):PNat&Err
+
+    -- 1>[8] rule: eq comp((E1:Exp + E2:Exp)) = (comp(E1) @ (comp(E2) @ (add | nil)))
+    --     { E1:Exp |-> e1, E2:Exp |-> e2 }
+    -- 1<[8] (comp((e1 + e2))):IList --> (comp(e1) @ (comp(e2) @ (add | nil))):IList
+
+    -- 1>[9] rule: eq exec((comp(E) @ L),S) = exec(L,(vm(comp(E)) | S))
+    --     { E |-> e1, L |-> (comp(e2) @ (add | nil)), S |-> empstk }
+    -- 1<[9] (exec((comp(e1) @ (comp(e2) @ (add | nil))),empstk)):PNat&Err --> (exec((comp(e2) @ (add | nil)),(vm(comp(e1)) | empstk))):PNat&Err
+
+    -- 1>[10] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(e1) }
+    -- 1<[10] (vm(comp(e1))):PNat&Err --> (exec(comp(e1),empstk)):PNat&Err
+
+    -- 1>[11] rule: eq exec((comp(E) @ L),S) = exec(L,(vm(comp(E)) | S))
+    --     { E |-> e2, L |-> (add | nil), S |-> (exec(comp(e1),empstk) | empstk) }
+    -- 1<[11] (exec((comp(e2) @ (add | nil)),(exec(comp(e1),empstk) | empstk))):PNat&Err --> (exec((add | nil),(vm(comp(e2)) | (exec(comp(e1),empstk) | empstk)))):PNat&Err
+
+    -- 1>[12] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(e2) }
+    -- 1<[12] (vm(comp(e2))):PNat&Err --> (exec(comp(e2),empstk)):PNat&Err
+
+    -- 1>[13] rule: eq exec((add | IL:IList),(NE2:PNat&Err | (NE1:PNat&Err | Stk:Stack))) = exec(IL,((NE1 + NE2) | Stk))
+    --     { IL:IList |-> nil, Stk:Stack |-> empstk, NE1:PNat&Err |-> exec(comp(e1),empstk), NE2:PNat&Err |-> exec(comp(e2),empstk) }
+    -- 1<[13] (exec((add | nil),(exec(comp(e2),empstk) | (exec(comp(e1),empstk) | empstk)))):PNat&Err --> (exec(nil,((exec(comp(e1),empstk) + exec(comp(e2),empstk)) | empstk))):PNat&Err
+
+    -- 1>[14] rule: eq exec(nil,(NE:PNat&Err | empstk)) = NE
+    --     { NE:PNat&Err |-> (exec(comp(e1),empstk) + exec(comp(e2),empstk)) }
+    -- 1<[14] (exec(nil,((exec(comp(e1),empstk) + exec(comp(e2),empstk)) | empstk))):PNat&Err --> (exec(comp(e1),empstk) + exec(comp(e2),empstk)):PNat&Err
+
+    -- 1>[15] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> (exec(comp(e1),empstk) + exec(comp(e2),empstk)) }
+    -- 1<[15] ((exec(comp(e1),empstk) + exec(comp(e2),empstk)) = (exec(comp(e1),empstk) + exec(comp(e2),empstk))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0003 sec for 15 rewrites + 313 matches)
+close
+-- End of Proof of Theorem 1
+
+-- The remaining part of the induction case can be tackled likewise.
+-- We need to prove the two lemmas to complete the verification:
+--
+-- Lemma 1
+-- inter(EN) = vm(comp(EN))
+-- Lemma 2
+-- exec(comp(E) @ L,S) = exec(L,vm(comp(E)) | S)
+--
+-- Lemma 1 can be proved by structural induction on EN that is ExpPNat, which does not need any lemmas.
+-- Proof by structural induction on ExpPNat is quite similar to proof by structural induction on PNat.
+-- 
+-- Lemma 2 can be proved by structural induction on E that is Exp, which does not need any lemmas.
+--
+
+-- Verification of Arithmetic Calculator Compiler
+-- Lemma 1
+-- inter(EN) = vm(comp(EN))
+--
+-- Proof of Lemma 1 By structural induction on EN.
+-- I. Base case
+open VERIFY-COMP .
+    -- check
+    red inter(0) = vm(comp(0)) .
+    -- reduce in %VERIFY-COMP : (inter(0) = vm(comp(0))):Bool
+    -- 1>[1] rule: eq inter(0) = 0
+    --     {}
+    -- 1<[1] (inter(0)):PNat --> (0):PZero
+
+    -- 1>[2] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(0) }
+    -- 1<[2] (vm(comp(0))):PNat&Err --> (exec(comp(0),empstk)):PNat&Err
+
+    -- 1>[3] rule: eq comp(EN) = (push(en2n(EN)) | nil)
+    --     { EN |-> 0 }
+    -- 1<[3] (comp(0)):IList --> (push(en2n(0)) | nil):IList
+
+    -- 1>[4] rule: eq en2n(0) = 0
+    --     {}
+    -- 1<[4] (en2n(0)):PNat --> (0):PZero
+
+    -- 1>[5] rule: eq exec((push(N:PNat) | IL:IList),Stk:Stack) = exec(IL,(N | Stk))
+    --     { N:PNat |-> 0, Stk:Stack |-> empstk, IL:IList |-> nil }
+    -- 1<[5] (exec((push(0) | nil),empstk)):PNat&Err --> (exec(nil,(0 | empstk))):PNat&Err
+
+    -- 1>[6] rule: eq exec(nil,(NE:PNat&Err | empstk)) = NE
+    --     { NE:PNat&Err |-> 0 }
+    -- 1<[6] (exec(nil,(0 | empstk))):PNat&Err --> (0):PZero
+
+    -- 1>[7] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> 0 }
+    -- 1<[7] (0 = 0):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 7 rewrites + 14 matches)
+close
+-- II. Induction case
+open VERIFY-COMP .
+    -- fresh constants
+    ops en : -> ExpPNat .
+    -- induction hypothesis
+    eq inter(en) = vm(comp(en)) .
+    -- check
+    red inter(s(en)) = vm(comp(s(en))) .
+    -- reduce in %VERIFY-COMP : (inter(s(en)) = vm(comp(s(en)))):Bool
+    -- 1>[1] rule: eq inter(s(EN)) = s(inter(EN))
+    --     { EN |-> en }
+    -- 1<[1] (inter(s(en))):PNat --> (s(inter(en))):NzPNat
+
+    -- 1>[2] rule: eq inter(en) = vm(comp(en))
+    --     {}
+    -- 1<[2] (inter(en)):PNat --> (vm(comp(en))):PNat&Err
+
+    -- 1>[3] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(en) }
+    -- 1<[3] (vm(comp(en))):PNat&Err --> (exec(comp(en),empstk)):PNat&Err
+
+    -- 1>[4] rule: eq comp(EN) = (push(en2n(EN)) | nil)
+    --     { EN |-> en }
+    -- 1<[4] (comp(en)):IList --> (push(en2n(en)) | nil):IList
+
+    -- 1>[5] rule: eq exec((push(N:PNat) | IL:IList),Stk:Stack) = exec(IL,(N | Stk))
+    --     { N:PNat |-> en2n(en), Stk:Stack |-> empstk, IL:IList |-> nil }
+    -- 1<[5] (exec((push(en2n(en)) | nil),empstk)):PNat&Err --> (exec(nil,(en2n(en) | empstk))):PNat&Err
+
+    -- 1>[6] rule: eq exec(nil,(NE:PNat&Err | empstk)) = NE
+    --     { NE:PNat&Err |-> en2n(en) }
+    -- 1<[6] (exec(nil,(en2n(en) | empstk))):PNat&Err --> (en2n(en)):PNat
+
+    -- 1>[7] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(s(en)) }
+    -- 1<[7] (vm(comp(s(en)))):PNat&Err --> (exec(comp(s(en)),empstk)):PNat&Err
+
+    -- 1>[8] rule: eq comp(EN) = (push(en2n(EN)) | nil)
+    --     { EN |-> s(en) }
+    -- 1<[8] (comp(s(en))):IList --> (push(en2n(s(en))) | nil):IList
+
+    -- 1>[9] rule: eq en2n(s(EN)) = s(en2n(EN))
+    --     { EN |-> en }
+    -- 1<[9] (en2n(s(en))):PNat --> (s(en2n(en))):NzPNat
+
+    -- 1>[10] rule: eq exec((push(N:PNat) | IL:IList),Stk:Stack) = exec(IL,(N | Stk))
+    --     { N:PNat |-> s(en2n(en)), Stk:Stack |-> empstk, IL:IList |-> nil }
+    -- 1<[10] (exec((push(s(en2n(en))) | nil),empstk)):PNat&Err --> (exec(nil,(s(en2n(en)) | empstk))):PNat&Err
+
+    -- 1>[11] rule: eq exec(nil,(NE:PNat&Err | empstk)) = NE
+    --     { NE:PNat&Err |-> s(en2n(en)) }
+    -- 1<[11] (exec(nil,(s(en2n(en)) | empstk))):PNat&Err --> (s(en2n(en))):NzPNat
+
+    -- 1>[12] rule: eq (s(M:PNat) = s(N:PNat)) = (M = N)
+    --     { N:PNat |-> en2n(en), M:PNat |-> en2n(en) }
+    -- 1<[12] (s(en2n(en)) = s(en2n(en))):Bool --> (en2n(en) = en2n(en)):Bool
+
+    -- 1>[13] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> en2n(en) }
+    -- 1<[13] (en2n(en) = en2n(en)):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 13 rewrites + 44 matches)
+close
+-- End of Proof of Lemma 1
+
+
+-- Verification of Arithmetic Calculator Compiler
+-- Lemma 2
+-- exec(comp(E) @ L,S) = exec(L,vm(comp(E)) | S)
+--
+-- Proof of Lemma 2 By structural induction on E.
+-- I. Base case
+open VERIFY-COMP .
+    -- fresh constants
+    op e : -> Exp .
+    op il : -> IList .
+    op stk : -> Stack .
+    -- check
+    red exec(comp(0) @ il,stk) = exec(il,vm(comp(0)) | stk) .
+    -- reduce in %VERIFY-COMP : (exec((comp(0) @ il),stk) = exec(il,(vm(comp(0)) | stk))):Bool
+    -- 1>[1] rule: eq comp(EN) = (push(en2n(EN)) | nil)
+    --     { EN |-> 0 }
+    -- 1<[1] (comp(0)):IList --> (push(en2n(0)) | nil):IList
+
+    -- 1>[2] rule: eq en2n(0) = 0
+    --     {}
+    -- 1<[2] (en2n(0)):PNat --> (0):PZero
+
+    -- 1>[3] rule: eq ((E:Instr | L1:IList) @ L2:IList) = (E | (L1 @ L2))
+    --     { E:Instr |-> push(0), L1:IList |-> nil, L2:IList |-> il }
+    -- 1<[3] ((push(0) | nil) @ il):IList --> (push(0) | (nil @ il)):IList
+
+    -- 1>[4] rule: eq (nil @ L2:IList) = L2
+    --     { L2:IList |-> il }
+    -- 1<[4] (nil @ il):IList --> (il):IList
+
+    -- 1>[5] rule: eq exec((push(N:PNat) | IL:IList),Stk:Stack) = exec(IL,(N | Stk))
+    --     { N:PNat |-> 0, Stk:Stack |-> stk, IL:IList |-> il }
+    -- 1<[5] (exec((push(0) | il),stk)):PNat&Err --> (exec(il,(0 | stk))):PNat&Err
+
+    -- 1>[6] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(0) }
+    -- 1<[6] (vm(comp(0))):PNat&Err --> (exec(comp(0),empstk)):PNat&Err
+
+    -- 1>[7] rule: eq comp(EN) = (push(en2n(EN)) | nil)
+    --     { EN |-> 0 }
+    -- 1<[7] (comp(0)):IList --> (push(en2n(0)) | nil):IList
+
+    -- 1>[8] rule: eq en2n(0) = 0
+    --     {}
+    -- 1<[8] (en2n(0)):PNat --> (0):PZero
+
+    -- 1>[9] rule: eq exec((push(N:PNat) | IL:IList),Stk:Stack) = exec(IL,(N | Stk))
+    --     { N:PNat |-> 0, Stk:Stack |-> empstk, IL:IList |-> nil }
+    -- 1<[9] (exec((push(0) | nil),empstk)):PNat&Err --> (exec(nil,(0 | empstk))):PNat&Err
+
+    -- 1>[10] rule: eq exec(nil,(NE:PNat&Err | empstk)) = NE
+    --     { NE:PNat&Err |-> 0 }
+    -- 1<[10] (exec(nil,(0 | empstk))):PNat&Err --> (0):PZero
+
+    -- 1>[11] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> exec(il,(0 | stk)) }
+    -- 1<[11] (exec(il,(0 | stk)) = exec(il,(0 | stk))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0002 sec for 11 rewrites + 63 matches)
+close
+-- II. Induction case
+open VERIFY-COMP .
+    -- fresh constants
+    op e : -> Exp .
+    op il : -> IList .
+    op stk : -> Stack .
+    -- induction hypothesis
+    eq exec(comp(e) @ L,S) = exec(L,vm(comp(e)) | S) .
+    -- check
+    red exec(comp(e) @ il,stk) = exec(il,vm(comp(e)) | stk) .
+    -- reduce in %VERIFY-COMP : (exec((comp(e) @ il),stk) = exec(il,(vm(comp(e)) | stk))):Bool
+    -- 1>[1] rule: eq exec((comp(e) @ L),S) = exec(L,(vm(comp(e)) | S))
+    --     { L |-> il, S |-> stk }
+    -- 1<[1] (exec((comp(e) @ il),stk)):PNat&Err --> (exec(il,(vm(comp(e)) | stk))):PNat&Err
+
+    -- 1>[2] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(e) }
+    -- 1<[2] (vm(comp(e))):PNat&Err --> (exec(comp(e),empstk)):PNat&Err
+
+    -- 1>[3] rule: eq vm(IL:IList) = exec(IL,empstk)
+    --     { IL:IList |-> comp(e) }
+    -- 1<[3] (vm(comp(e))):PNat&Err --> (exec(comp(e),empstk)):PNat&Err
+
+    -- 1>[4] rule: eq (CUX:*Cosmos* = CUX) = true
+    --     { CUX:*Cosmos* |-> exec(il,(exec(comp(e),empstk) | stk)) }
+    -- 1<[4] (exec(il,(exec(comp(e),empstk) | stk)) = exec(il,(exec(comp(e),empstk) | stk))):Bool --> (true):Bool
+
+    -- (true):Bool
+    -- (0.0000 sec for parse, 0.0001 sec for 4 rewrites + 113 matches)
+close
+-- End of Proof of Lemma 2
