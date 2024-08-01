@@ -1,0 +1,188 @@
+--
+-- Some modules (data stuructures) used in the Minila
+-- implementation.
+--
+
+mod! BOOL-ERR {
+  pr(BOOL)
+  [Bool ErrBool < Bool&Err]
+  op errBool : -> ErrBool {constr} .
+}
+
+mod! NAT-ERR {
+  pr(NAT)
+  pr(BOOL-ERR)
+  [Nat ErrNat < Nat&Err]
+  op errNat : -> ErrNat {constr} .
+  op p_ : Nat&Err -> Nat&Err .
+  op _+_ : Nat&Err Nat&Err -> Nat&Err {assoc comm} .
+  op _*_ : Nat&Err Nat&Err -> Nat&Err {assoc comm} .
+  op sd : Nat&Err Nat&Err -> Nat&Err .
+  op _quo_ : Nat&Err Nat&Err -> Nat&Err .
+  op _rem_ : Nat&Err Nat&Err -> Nat&Err .
+  op _<_ : Nat&Err Nat&Err -> Bool&Err .
+  op _>_ : Nat&Err Nat&Err -> Bool&Err .
+  op if_then{_}else{_} : Bool&Err Nat&Err Nat&Err -> Nat&Err .
+  --
+  var N : Nat .
+  vars N&E N&E1 N&E2 : Nat&Err .
+  -- p_
+  eq p 0 = errNat .
+  eq p errNat = errNat .
+  -- _+_
+  eq errNat + N&E = errNat .
+  -- _*_
+  eq errNat * N&E = errNat .
+  -- sd
+  eq sd(errNat,N&E) = errNat .
+  eq sd(N&E,errNat) = errNat .
+  -- _quo_
+  eq N quo 0 = errNat .
+  eq errNat quo N&E = errNat .
+  eq N&E quo errNat = errNat .
+  -- _rem_
+  eq N rem 0 = errNat .
+  eq errNat rem N&E = errNat .
+  eq N&E rem errNat = errNat .
+  -- _<_
+  eq errNat < N&E = errBool .
+  eq N&E < errNat = errBool .
+  -- _>_
+  eq errNat > N&E = errBool .
+  eq N&E > errNat = errBool .
+  -- if_then{_}else{_}
+  eq if true then {N&E1} else {N&E2} = N&E1 .
+  eq if false then {N&E1} else {N&E2} = N&E2 .
+}
+
+mod! PAIR (M :: TRIV, N :: TRIV) {
+  [Pair]
+  op (_,_) : Elt.M Elt.N -> Pair {constr} .
+}
+
+mod* TRIV-ERR {
+  [Elt Err < Elt&Err]
+  op err : -> Err {constr} .
+}
+
+mod! LIST (M :: TRIV-ERR) {
+  pr(NAT-ERR)
+  [List]
+  op nil : -> List {constr} .
+  op _|_ : Elt.M List -> List {constr} .
+  op _@_ : List List -> List {r-assoc} .
+  op nth : List Nat&Err -> Elt&Err.M .
+  op len : List -> Nat .
+  vars X Y : Elt.M .
+  vars L L1 : List .
+  var N : Nat .
+  var NzN : NzNat .
+  -- _@_
+  eq nil @ L = L .
+  eq (X | L1) @ L = X | (L1 @ L) .
+  -- nth
+  eq nth(L,errNat) = err.M .
+  eq nth(nil,N) = err.M .
+  eq nth((X | L),0) = X .
+  eq nth((X | L),NzN) = nth(L,p NzN) .
+  -- len
+  eq len(nil) = 0 .
+  eq len(X | L) = len(L) + 1 .
+}
+
+--
+-- Module VAR is declared in ast.cafe.
+--
+mod! ENTRY {
+  pr(PAIR(VAR,NAT) * {sort Pair -> Entry})
+  [Entry ErrEntry < Entry&Err]
+  op errEntry : -> ErrEntry .
+}
+
+view TRIV-ERR2ENTRY from TRIV-ERR to ENTRY {
+  sort Elt -> Entry,
+  sort Err -> ErrEntry,
+  sort Elt&Err -> Entry&Err,
+  op err -> errEntry
+}
+
+--
+-- Variables, together with values (natural numbers) are
+-- registered into an environment.
+-- An environment is implemented as tables from variables to
+-- natural numbers (more concretely as lists of pairs of variables
+-- and natural numbers).
+--
+mod! ENV {
+  pr(NAT-ERR)
+  pr(LIST(M <= TRIV-ERR2ENTRY)
+     * {sort List -> Env, op nil -> empEnv})
+  [Env ErrEnv < Env&Err]
+  op errEnv : -> ErrEnv {constr} .
+  op _|_ : Entry&Err Env&Err -> Env&Err .
+  op update : Env&Err Var Nat&Err -> Env&Err .
+  op lookup : Env&Err Var -> Nat&Err .
+  op if_then{_}else{_} : Bool&Err Env&Err Env&Err -> Env&Err .
+  --
+  var E : Env .
+  vars V V1 : Var .
+  vars N N1 : Nat .
+  vars E&E E&E1 E&E2 : Env&Err .
+  var N&E : Nat&Err .
+  var ET&E : Entry&Err .
+  -- _|_
+  eq errEntry | E&E = errEnv .
+  eq ET&E | errEnv = errEnv .
+  -- update
+  eq update(E&E,V,errNat) = errEnv .
+  eq update(errEnv,V,N&E) = errEnv .
+  eq update(empEnv,V,N) = (V,N) | empEnv .
+  eq update((V1,N1) | E,V,N)
+     = if V1 == V then {(V,N) | E} else {(V1,N1) | update(E,V,N)} .
+  -- lookup
+  eq lookup(errEnv,V) = errNat .
+  eq lookup(empEnv,V) = errNat .
+  eq lookup((V1,N1) | E,V)
+     = if V1 == V then {N1} else {lookup(E,V)} .
+  -- if_then{_}else{_}
+  eq if true then {E&E1} else {E&E2} = E&E1 .
+  eq if false then {E&E1} else {E&E2} = E&E2 .
+}
+
+open ENV .
+  ops x y : -> Var .
+  op env : -> Env .
+  eq env = update(update(empEnv,x,0),y,1) .
+  red env .
+  red errEnv .
+  red lookup(env,x) .
+  red lookup(env,y) .
+  red nth(env,1) .
+  red nth(env,2) .
+close
+
+--
+-- A stack is represented as a list of natural numbers.
+--
+
+view TRIV-ERR2NAT-ERR from TRIV-ERR to NAT-ERR {
+  sort Elt -> Nat,
+  sort Err -> ErrNat,
+  sort Elt&Err -> Nat&Err,
+  op err -> errNat
+}
+
+mod! STACK {
+  pr(LIST(M <= TRIV-ERR2NAT-ERR)
+     * {sort List -> Stack, op nil -> empstk} )
+  [Stack ErrStack < Stack&Err]
+  op errStack : -> ErrStack {constr} .
+  op _|_ : Nat&Err Stack&Err -> Stack&Err .
+  --
+  var S&E : Stack&Err .
+  var N&E : Nat&Err .
+  -- _|_
+  eq errNat | S&E = errStack .
+  eq N&E | errStack = errStack .
+}
+

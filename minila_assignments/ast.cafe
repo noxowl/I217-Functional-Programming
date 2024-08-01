@@ -1,0 +1,89 @@
+--
+-- Variables
+--
+mod* VAR principal-sort Var {
+  [Var]
+}
+
+--
+-- Expressions
+--
+mod! EXP {
+  pr(VAR)
+  pr(NAT)
+  [Var < Exp]
+  op n : Nat -> Exp {constr} .
+  op _+_ : Exp Exp -> Exp {constr prec: 33 l-assoc} .
+  op _-_ : Exp Exp -> Exp {constr prec: 33 l-assoc} .
+  op _*_ : Exp Exp -> Exp {constr prec: 31 l-assoc} .
+  op _/_ : Exp Exp -> Exp {constr prec: 31 l-assoc} .
+  op _%_ : Exp Exp -> Exp {constr prec: 31 l-assoc} .
+  op _===_ : Exp Exp -> Exp {constr prec: 40 l-assoc} .
+  op _=!=_ : Exp Exp -> Exp {constr prec: 40 l-assoc} .
+  op _<_ : Exp Exp -> Exp {constr prec: 40 l-assoc} .
+  op _>_ : Exp Exp -> Exp {constr prec: 40 l-assoc} .
+  op _&&_ : Exp Exp -> Exp {constr prec: 50 l-assoc} .
+  op _||_ : Exp Exp -> Exp {constr prec: 55 l-assoc} .
+}
+
+--
+-- Statements
+--
+mod! STM {
+  pr(EXP)
+  [Stm]
+  op estm : -> Stm {constr} .
+  op _:=_; : Var Exp -> Stm {constr} .
+  op if_{_}else{_} : Exp Stm Stm -> Stm {constr} .
+  op while_{_} : Exp Stm -> Stm {constr} .
+  op for___{_} : Var Exp Exp Stm -> Stm {constr} .
+  op __ : Stm Stm -> Stm {constr prec: 60 id: estm l-assoc} .
+}
+
+open STM .
+  ops x y z tmp : -> Var .
+  
+  op p1 : -> Stm .
+  eq p1 = x := n(1) ;
+          y := n(1) ;
+          while y < n(10) || y === n(10) {
+            x := x * y ;
+            y := y + n(1) ;
+          } .
+  red p1 .
+
+  op p2 : -> Stm .
+  eq p2 = x := n(1) ;
+          for y n(1) n(10) {
+            x := y * x ;
+          } .
+  red p2 .
+
+  op p3 : -> Stm .
+  eq p3 = x := n(24) ;
+          y := n(30) ;
+          while y =!= n(0) {
+            z := x % y ;
+            x := y ;
+            y := z ;
+          } .
+  red p3 .  
+
+  op p4 : -> Stm .
+  eq p4 = x := n(200000000) ;
+          y := n(0) ;
+          z := x ;
+          while y === z {
+            if ((z - y) % n(2)) === n(0) {
+              tmp := y + (z - y) / n(2) ;
+            } else {
+              tmp := y + ((z - y) / n(2)) + n(1) ;
+            }
+            if tmp * tmp > x {
+              z := tmp - n(1) ;
+            } else {
+              y := tmp ;
+            }
+          } .
+  red p4 .  
+close

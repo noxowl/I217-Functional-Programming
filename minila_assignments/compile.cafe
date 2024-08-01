@@ -1,0 +1,152 @@
+--
+-- A compiler for Minila programs
+--
+-- Solution written by: RHIE Suyeong
+--
+
+--
+-- - Function compile takes a Minila program and converts it into
+--   an instruction sequence.
+-- - Function generator actually does this.
+-- - genForExp does this for expression.
+--
+in ast
+in misc
+in vm
+
+mod! COMPILE {
+  pr(STM)
+  pr(ILIST)
+  op compile : Stm -> IList .
+  op generate : Stm -> IList .
+  op genForExp : Exp -> IList .
+  vars E E1 E2 : Exp .
+  vars S S1 S2 : Stm .
+  var V : Var .
+  var N : Nat .
+  var IL : IList .
+
+  -- compile
+  eq compile(S) = generate(S) @ (quit | iln) .
+
+  -- generate
+  eq generate(V := E ;)
+    = genForExp(E) @ (store(V) | iln) .
+
+  eq generate(if E {S1} else {S2})
+    = genForExp(E)
+      @ (jumpOnCond(2) | jump(len(generate(S1)) + 2) | iln)
+      @ generate(S1)
+      @ (jump(len(generate(S2)) + 1) | iln)
+      @ generate(S2) .
+
+  eq generate(while E {S})
+    = genForExp(E)
+      @ (jumpOnCond(2) | jump(len(generate(S)) + 2) | iln)
+      @ generate(S)
+      @ (bjump(len(genForExp(E)) + len(generate(S)) + 2) | iln) .
+
+  eq generate(for V E1 E2 {S})
+    = generate(
+        V := E1 ;
+        while V < E2 || V === E2 {
+          S
+          V := V + n(1) ;
+        }) .
+
+  eq generate(S1 S2)
+    = generate(S1) @ generate(S2) .
+
+  -- genForExp
+  eq genForExp(n(N)) = push(N) | iln .
+  eq genForExp(V) = load(V) | iln .
+  eq genForExp(E1 + E2) = genForExp(E1) @ genForExp(E2) @ (add | iln) .
+  eq genForExp(E1 - E2) = genForExp(E1) @ genForExp(E2) @ (minus | iln) .
+  eq genForExp(E1 * E2) = genForExp(E1) @ genForExp(E2) @ (multiply | iln) .
+  eq genForExp(E1 / E2) = genForExp(E1) @ genForExp(E2) @ (divide | iln) .
+  eq genForExp(E1 % E2) = genForExp(E1) @ genForExp(E2) @ (mod | iln) .
+  eq genForExp(E1 === E2) = genForExp(E1) @ genForExp(E2) @ (equal | iln) .
+  eq genForExp(E1 =!= E2) = genForExp(E1) @ genForExp(E2) @ (notEqual | iln) .
+  eq genForExp(E1 && E2) = genForExp(E1) @ genForExp(E2) @ (and | iln) .
+  eq genForExp(E1 || E2) = genForExp(E1) @ genForExp(E2) @ (or | iln) .
+  eq genForExp(E1 < E2) = genForExp(E1) @ genForExp(E2) @ (lessThan | iln) .
+  eq genForExp(E1 > E2) = genForExp(E1) @ genForExp(E2) @ (greaterThan | iln) .
+  }
+
+-- eof
+
+open COMPILE + VM .
+  ops x y z tmp : -> Var .
+  
+  op p1 : -> Stm .
+  eq p1 = x := n(1) ;
+          y := n(1) ;
+          while y < n(10) || y === n(10) {
+            x := x * y ;
+            y := y + n(1) ;
+          } .
+  red compile(p1) .
+  -- reduce in %VM + COMPILE : (compile(p1)):IList
+  -- (push(1) | (store(x) | (push(1) | (store(y) | (load(y) | (push(10) | (lessThan | (load(y) | (push(10) | (equal | (or | (jumpOnCond(2) | (jump(10) | (load(x) | (load(y) | (multiply | (store(x) | (load(y) | (push(1) | (add | (store(y) | (bjump(17) | (quit | iln))))))))))))))))))))))):IList
+  -- (0.0000 sec for parse, 0.0008 sec for 252 rewrites + 509 matches)
+  red run(compile(p1)) .
+  -- reduce in %VM + COMPILE : (run(compile(p1))):Env&Err
+  -- ((x , 3628800) | ((y , 11) | empEnv)):Env
+  -- (0.0000 sec for parse, 0.0395 sec for 5952 rewrites + 16880 matches)
+
+  op p2 : -> Stm .
+  eq p2 = x := n(1) ;
+          for y n(1) n(10) {
+            x := y * x ;
+          } .
+  red compile(p2) .
+  -- reduce in %VM + COMPILE : (compile(p2)):IList
+  -- (push(1) | (store(x) | (push(1) | (store(y) | (load(y) | (push(10) | (lessThan | (load(y) | (push(10) | (equal | (or | (jumpOnCond(2) | (jump(10) | (load(y) | (load(x) | (multiply | (store(x) | (load(y) | (push(1) | (add | (store(y) | (bjump(17) | (quit | iln))))))))))))))))))))))):IList
+  -- (0.0000 sec for parse, 0.0009 sec for 251 rewrites + 507 matches)
+  red run(compile(p2)) .
+  -- reduce in %VM + COMPILE : (run(compile(p2))):Env&Err
+  -- ((x , 3628800) | ((y , 11) | empEnv)):Env
+  -- (0.0000 sec for parse, 0.0355 sec for 5951 rewrites + 16878 matches)
+
+  op p3 : -> Stm .
+  eq p3 = x := n(24) ;
+          y := n(30) ;
+          while y =!= n(0) {
+            z := x % y ;
+            x := y ;
+            y := z ;
+          } .
+  red compile(p3) .
+  -- reduce in %VM + COMPILE : (compile(p3)):IList
+  -- (push(24) | (store(x) | (push(30) | (store(y) | (load(y) | (push(0) | (notEqual | (jumpOnCond(2) | (jump(10) | (load(x) | (load(y) | (mod | (store(z) | (load(y) | (store(x) | (load(z) | (store(y) | (bjump(13) | (quit | iln))))))))))))))))))):IList
+  -- (0.0000 sec for parse, 0.0007 sec for 216 rewrites + 443 matches)
+  red run(compile(p3)) .
+  -- reduce in %VM + COMPILE : (run(compile(p3))):Env&Err
+  -- ((x , 6) | ((y , 0) | ((z , 0) | empEnv))):Env
+  -- (0.0000 sec for parse, 0.0081 sec for 1525 rewrites + 4299 matches)
+
+  op p4 : -> Stm .
+  eq p4 = x := n(20000000000000000) ;
+          y := n(0) ;
+          z := x ;
+          while y =!= z {
+            if ((z - y) % n(2)) === n(0) {
+              tmp := y + (z - y) / n(2) ;
+            } else {
+              tmp := y + ((z - y) / n(2)) + n(1) ;
+            }
+            if tmp * tmp > x {
+              z := tmp - n(1) ;
+            } else {
+              y := tmp ;
+            }
+          } .
+  red compile(p4) .
+  -- reduce in %VM + COMPILE : (compile(p4)):IList
+  -- (push(20000000000000000) | (store(x) | (push(0) | (store(y) | (load(x) | (store(z) | (load(y) | (load(z) | (notEqual | (jumpOnCond(2) | (jump(44) | (load(z) | (load(y) | (minus | (push(2) | (mod | (push(0) | (equal | (jumpOnCond(2) | (jump(10) | (load(y) | (load(z) | (load(y) | (minus | (push(2) | (divide | (add | (store(tmp) | (jump(11) | (load(y) | (load(z) | (load(y) | (minus | (push(2) | (divide | (add | (push(1) | (add | (store(tmp) | (load(tmp) | (load(tmp) | (multiply | (load(x) | (greaterThan | (jumpOnCond(2) | (jump(6) | (load(tmp) | (push(1) | (minus | (store(z) | (jump(3) | (load(tmp) | (store(y) | (bjump(47) | (quit | iln))))))))))))))))))))))))))))))))))))))))))))))))))))))):IList
+  -- (0.0000 sec for parse, 0.0081 sec for 1418 rewrites + 2633 matches)
+  red run(compile(p4)) .
+  -- reduce in %VM + COMPILE : (run(compile(p4))):Env&Err
+  -- ((x , 20000000000000000) | ((y , 141421356) | ((z , 141421356) | ((tmp , 141421356) | empEnv)))):Env
+  -- (0.0000 sec for parse, 1.4059 sec for 120394 rewrites + 321557 matches)
+close
