@@ -11,6 +11,6 @@
 6. Investigate SMT solvers, such as Z3 and Yices.
 7. Investigate any other tools that support/automate theorem proving.
 8. Investigate the proof of the four‐color problem conducted with Coq.
-    - https://doi.org/10.1007/978‐3‐540‐87827‐8_28
+    - https://doi.org/10.1007/978-3-540-87827-8_28
     - https://www.ams.org/notices/200811/tx081101382p.pdf
     - https://github.com/coq‐community/fourcolor
